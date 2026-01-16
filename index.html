@@ -1006,37 +1006,6 @@ function cancelMatchmaking() {
     resetLobby();
 }
 
-// --- REMATCH LOGIC (Updated for matchmaking) ---
-
-function requestRematch() {
-    if(!rematchMe) {
-        rematchMe = true;
-        document.getElementById('btn-rematch').classList.add('btn-secondary');
-        document.getElementById('btn-rematch').innerText = "REQUESTED";
-        document.getElementById('rematch-msg').classList.remove('hidden');
-        if(conn) conn.send({ type: 'REQUEST_REMATCH' });
-        checkRematchStart();
-    }
-}
-
-function checkRematchStart() {
-    if(rematchMe && rematchOpp) {
-        document.getElementById('game-over').style.display = 'none';
-        resetGameVars();
-        if(isHost) startMultiplayerGame();
-    }
-}
-
-function resetGameVars() {
-    rematchMe = false; rematchOpp = false;
-    document.getElementById('btn-rematch').classList.remove('btn-secondary');
-    document.getElementById('btn-rematch').innerText = "REMATCH";
-    document.getElementById('rematch-msg').classList.add('hidden');
-    projectiles = [];
-    blindTurns = 0; mustPlayBasic = false; canParry = false;
-}
-
-
 function requestRematch() {
     if(!rematchMe) {
         rematchMe = true;
@@ -1227,6 +1196,316 @@ function startNewMatch() {
     let myStartCards = p1Hand.map(c => new Card(c.suit, c.value, true));
     let topCard = new Card(topDiscard.suit, topDiscard.value, true);
     playDealAnimation(myStartCards, p2Hand.length, topCard);
+}
+// ======================================================
+// BAGIAN KODE YANG HILANG (GAMEPLAY LOGIC)
+// ======================================================
+
+class FloatingText {
+    constructor(text, x, y, color) {
+        this.text = text; this.x = x; this.y = y; this.color = color;
+        this.life = 1.0; this.vy = -2;
+    }
+    update() { this.y += this.vy; this.life -= 0.02; }
+    draw(ctx) {
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.fillStyle = this.color; ctx.font = "bold 24px Orbitron";
+        ctx.textAlign = "center"; ctx.fillText(this.text, this.x, this.y);
+        ctx.globalAlpha = 1;
+    }
+}
+
+function showFloatingText(text, x, y, color) {
+    floatingTexts.push(new FloatingText(text, x, y, color));
+}
+
+function createDeck() {
+    let d = [];
+    SUITS.forEach(s => {
+        let limit = (s === 'moon' || s === 'mirror') ? 4 : 9; // Kartu spesial lebih sedikit
+        for (let v = 1; v <= limit; v++) {
+            d.push({ suit: s, value: v });
+            if (s !== 'moon' && s !== 'mirror') d.push({ suit: s, value: v }); // Basic cards double
+        }
+    });
+    return d;
+}
+
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+// Fungsi Host memulai game
+function startMultiplayerGame() {
+    deck = createDeck();
+    shuffle(deck);
+    
+    // Deal 7 kartu ke masing-masing
+    let p1HandCards = deck.splice(0, 7);
+    let p2HandCards = deck.splice(0, 7);
+    let topDiscard = deck.pop();
+    
+    // Tentukan giliran random
+    let startingTurn = Math.random() < 0.5 ? 'p1' : 'p2';
+
+    // Kirim data ke Client (Guest)
+    if (conn && conn.open) {
+        conn.send({
+            type: 'START_GAME',
+            p1HandCount: 7, // Host hand count seen by guest
+            p2Hand: p2HandCards, // Guest's actual cards
+            topDiscard: topDiscard,
+            turn: startingTurn
+        });
+    }
+
+    // Setup Host (Local)
+    gameState = 'PLAYING';
+    turn = (startingTurn === 'p1') ? 'me' : 'opponent';
+    
+    // Konversi data kartu mentah ke Class Card
+    let myStartCards = p1HandCards.map(c => new Card(c.suit, c.value, true));
+    let topCardObj = new Card(topDiscard.suit, topDiscard.value, true);
+    
+    playDealAnimation(myStartCards, 7, topCardObj);
+}
+
+function playDealAnimation(myCards, oppCount, topCard) {
+    // Reset kondisi
+    myHand = [];
+    opponentHand = [];
+    discardPile = [topCard];
+    
+    topCard.x = width/2; topCard.y = height/2;
+    topCard.isFaceUp = true;
+
+    // Animasi kartu lawan
+    for(let i=0; i<oppCount; i++) {
+        let c = new Card('fire', 0, false); // Dummy card
+        c.x = width; c.y = 0;
+        opponentHand.push(c);
+    }
+    recalcOpponentHand();
+
+    // Animasi kartu kita
+    let delay = 0;
+    myCards.forEach((c, index) => {
+        c.x = 0; c.y = height;
+        setTimeout(() => {
+            myHand.push(c);
+            playSound('deal');
+            recalcHand();
+        }, delay);
+        delay += 100;
+    });
+}
+
+function recalcHand() {
+    let totalW = myHand.length * (cardW * 0.6);
+    let startX = (width - totalW) / 2 + cardW/2;
+    
+    myHand.forEach((c, i) => {
+        let tx = startX + i * (cardW * 0.6);
+        let ty = height - cardH/2 - 20;
+        
+        // Jika sedang di-hover naik sedikit
+        if (c.isHovered && !c.isDragging) ty -= 30;
+        
+        // Pindahkan hanya jika tidak sedang di-drag user
+        if (!c.isDragging) {
+            c.targetX = tx;
+            c.targetY = ty;
+        }
+    });
+}
+
+function recalcOpponentHand() {
+    let totalW = opponentHand.length * (cardW * 0.4); // Lebih rapat
+    let startX = (width - totalW) / 2 + cardW/2;
+    
+    opponentHand.forEach((c, i) => {
+        c.targetX = startX + i * (cardW * 0.4);
+        c.targetY = cardH/2 - 20; // Di atas layar
+    });
+}
+
+function drawCardFromDeckLogic() {
+    // Simulasi ambil kartu acak (karena deck asli ada di Host, tapi untuk visual Client side)
+    let suits = ['fire', 'water', 'leaf'];
+    let rndSuit = suits[Math.floor(Math.random()*suits.length)];
+    let rndVal = Math.floor(Math.random()*9)+1;
+    return new Card(rndSuit, rndVal, true);
+}
+
+function spawnExplosion(x, y, color) {
+    for(let i=0; i<20; i++) {
+        particles.push(new Particle(x, y, color, true));
+    }
+}
+
+function spawnProjectiles(isMe, isSlow) {
+    // Spawn kartu yang menyerang
+    let p = new ProjectileCard(isMe, isSlow);
+    projectiles.push(p);
+}
+
+function processOpponentMove(cardData, isCrit) {
+    // Visual kartu lawan yang dibuang
+    let c = opponentHand.pop(); 
+    if(!c) { // Fallback jika sync error
+        c = new Card(cardData.suit, cardData.value, false);
+        c.x = width/2; c.y = 0;
+    }
+    
+    // Ubah data kartu dummy menjadi kartu asli yang dimainkan
+    c.suit = cardData.suit;
+    c.value = cardData.value;
+    c.isFaceUp = true; 
+    
+    discardPile.push(c);
+    c.moveTo(width/2, height/2, 500);
+    
+    recalcOpponentHand();
+    playSound('play');
+    
+    // --- TAMBAHAN PENTING: CEK APAKAH LAWAN MENANG (KARTU HABIS) ---
+    if (opponentHand.length === 0) {
+        setTimeout(() => {
+            endGame("DEFEAT", "Opponent cleared their hand!");
+        }, 1000); // Beri jeda sedikit agar animasi kartu terlihat dulu
+        return; // Hentikan fungsi agar tidak lanjut ke giliran kita
+    }
+    // -------------------------------------------------------------
+    
+    turn = 'me'; // Sekarang giliran kita
+    showFloatingText("YOUR TURN", width/2, height/2 + 50, "#00FF00");
+}
+
+
+// INPUT HANDLING (Agar bisa klik kartu)
+window.addEventListener('mousedown', handleInputStart);
+window.addEventListener('touchstart', (e) => handleInputStart(e.touches[0]), {passive: false});
+
+window.addEventListener('mousemove', handleInputMove);
+window.addEventListener('touchmove', (e) => handleInputMove(e.touches[0]), {passive: false});
+
+window.addEventListener('mouseup', handleInputEnd);
+window.addEventListener('touchend', handleInputEnd);
+
+function handleInputStart(e) {
+    if (gameState !== 'PLAYING' || turn !== 'me') return;
+    if (blindTurns > 0) return; // Tidak bisa gerak saat kena efek Moon/Blind
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Cek klik kartu tangan sendiri (dari paling atas/kanan)
+    for (let i = myHand.length - 1; i >= 0; i--) {
+        let c = myHand[i];
+        if (Math.abs(x - c.x) < cardW/2 && Math.abs(y - c.y) < cardH/2) {
+            dragIdx = i;
+            c.isDragging = true;
+            c.isSelected = true;
+            dragOffsetX = x - c.x;
+            dragOffsetY = y - c.y;
+            playSound('flip');
+            break;
+        }
+    }
+}
+
+function handleInputMove(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Hover effect
+    myHand.forEach(c => c.isHovered = false);
+    for (let i = myHand.length - 1; i >= 0; i--) {
+        let c = myHand[i];
+        if (Math.abs(x - c.x) < cardW/2 && Math.abs(y - c.y) < cardH/2) {
+            c.isHovered = true;
+            break; 
+        }
+    }
+
+    if (dragIdx !== -1) {
+        let c = myHand[dragIdx];
+        c.x = x - dragOffsetX;
+        c.y = y - dragOffsetY;
+    }
+}
+
+function handleInputEnd() {
+    if (dragIdx !== -1) {
+        let c = myHand[dragIdx];
+        let top = discardPile[discardPile.length - 1];
+        
+        // Logika Drop ke area tengah (Validasi sederhana)
+        let dist = Math.hypot(c.x - width/2, c.y - height/2);
+        
+        if (dist < 150) {
+            // Cek Rules Uno (Warna sama, Angka sama, atau Spesial)
+            let valid = (c.suit === top.suit || c.value === top.value || 
+                         c.suit === 'mirror' || top.suit === 'mirror' || 
+                         c.suit === 'moon' || top.suit === 'moon');
+            
+            if (valid) {
+                playCard(dragIdx);
+            } else {
+                returnCardToHand(c);
+                playSound('error');
+            }
+        } else {
+            returnCardToHand(c);
+        }
+        
+        c.isDragging = false;
+        c.isSelected = false;
+        dragIdx = -1;
+    }
+}
+
+function returnCardToHand(c) {
+    c.isAnimatingPos = false; // Biarkan update loop mengembalikan posisi via recalcHand
+}
+
+function playCard(index) {
+    let card = myHand.splice(index, 1)[0];
+    discardPile.push(card);
+    
+    card.moveTo(width/2, height/2, 300);
+    card.scaleX = 1; // Pastikan lurus
+    
+    recalcHand();
+    playSound('play');
+    
+    // Kirim move ke lawan
+    if(conn && conn.open) {
+        conn.send({
+            type: 'OPPONENT_MOVE',
+            card: { suit: card.suit, value: card.value },
+            isCrit: false
+        });
+    }
+    
+    turn = 'opponent';
+    
+    // Efek khusus
+    if (card.suit === 'moon') {
+        spawnExplosion(width/2, height/2, COLORS.moon);
+        if(conn) conn.send({ type: 'MOON_ATTACK', card: {suit:'moon', value:0} });
+    }
+    
+    // Cek Kemenangan
+    if (myHand.length === 0) {
+        endGame("YOU WIN!", "Victory Achieved");
+        // Beritahu lawan kalah (logic ini bisa ditambah di handleNetworkData lawan)
+    }
 }
 
 // Inisialisasi Akhir
