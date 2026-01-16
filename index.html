@@ -354,6 +354,8 @@ let myPeerID = null;
 let isHost = false;
 let rematchMe = false;
 let rematchOpp = false;
+let canParry = false; // ADDED: track whether player can parry incoming critical attacks
+
 
 // Matchmaking Configuration
 const BROKER_URL = "https://beagle-causal-gorilla.ngrok-free.app"; // Change this to your deployed broker URL
@@ -1026,42 +1028,74 @@ function startMultiplayerGame() {
 
     conn.send({
         type: 'START_GAME', deckCount: deckCount, topDiscard: top,
-        p1HandCount: 6, p2Hand: p2H, turn: turn === 'me' ? 'p1' : 'p2'
+        p1HandCount: 5, p2Hand: p2H, turn: turn === 'me' ? 'p1' : 'p2'
     });
-    playDealAnimation(myStartCards, 6, topCardObj);
+    playDealAnimation(myStartCards, 5, topCardObj);
 }
 
 function playDealAnimation(myCards, oppCount, topCard) {
+    // Robust dealing with safety fallbacks to avoid infinite loops/stalls
     isAnimating = true; myHand = []; opponentHand = []; discardPile = [];
-    let dealSpeed = 100; let totalCards = myCards.length + oppCount; let dealt = 0;
-    
-    let dealInterval = setInterval(() => {
-        if (dealt >= totalCards) {
-            clearInterval(dealInterval);
-            setTimeout(() => {
+    let dealSpeed = 100;
+
+    // Coerce oppCount and guard against bad/missing values
+    oppCount = Number(oppCount);
+    if (!isFinite(oppCount) || oppCount < 0) oppCount = Math.max(5, Math.floor(myCards.length));
+
+    let totalCards = (Array.isArray(myCards) ? myCards.length : 0) + oppCount;
+    let dealt = 0;
+    let safetyCounter = 0; // extra guard
+
+    function finishDeal() {
+        if (dealInterval) clearInterval(dealInterval);
+        setTimeout(() => {
+            try {
                 topCard.x = 60; topCard.y = height/2 + 30; discardPile.push(topCard);
-                playSound('play'); isAnimating = false;
-                setTimeout(() => { showFloatingText(turn === 'me' ? "YOUR TURN" : "OPPONENT'S TURN", width/2, height/2 + 100, turn==='me'?"#0f0":"#fff"); }, 500);
-            }, 300);
+            } catch (e) { console.warn('finishDeal: topCard missing', e); }
+            playSound('play');
+            isAnimating = false;
+            setTimeout(() => { showFloatingText(turn === 'me' ? "YOUR TURN" : "OPPONENT'S TURN", width/2, height/2 + 100, turn === 'me' ? "#0f0" : "#fff"); }, 500);
+        }, 300);
+    }
+
+    let dealInterval = setInterval(() => {
+        safetyCounter++;
+        if (safetyCounter > 1000) { // absolute safety
+            console.warn('Dealing safety timeout triggered');
+            finishDeal();
             return;
         }
-        
-        let c;
+
+        if (dealt >= totalCards) { finishDeal(); return; }
+
+        let c = null;
         if (dealt % 2 === 0) {
-            c = new Card('fire', 1, false); 
+            // deal to opponent
+            c = new Card('fire', 1, false);
             c.x = 60; c.y = height/2 + 30; c.isFaceUp = false;
             opponentHand.push(c);
         } else {
+            // deal to me (from provided myCards), fallback if missing
             let cardIndex = Math.floor(dealt / 2);
-            if (myCards[cardIndex]) {
-                c = myCards[cardIndex]; 
-                c.x = 60; c.y = height/2 + 30;
-                c.isFaceUp = false; 
+            if (Array.isArray(myCards) && myCards[cardIndex]) {
+                c = myCards[cardIndex];
+                c.x = 60; c.y = height/2 + 30; c.isFaceUp = false;
+                myHand.push(c);
+            } else {
+                // fallback: generate a harmless basic card so dealing continues
+                const s = BASIC_SUITS[Math.floor(Math.random() * BASIC_SUITS.length)];
+                c = new Card(s, Math.ceil(Math.random() * 9), true);
+                c.x = 60; c.y = height/2 + 30; c.isFaceUp = false;
                 myHand.push(c);
             }
         }
-        playSound('deal'); dealt++;
+
+        playSound('deal');
+        dealt++;
     }, dealSpeed);
+
+    // Final safety in case interval doesn't clear for any reason
+    setTimeout(() => { if (isAnimating) finishDeal(); }, 20000);
 }
 
 function isValidMove(card, topCard) {
@@ -1349,6 +1383,9 @@ function loop() { update(); draw(); requestAnimationFrame(loop); }
 
 function resize() { 
     const dpr = window.devicePixelRatio || 1;
+    // reset transform before scaling to avoid cumulative ctx.scale calls
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
     canvas.width = window.innerWidth * dpr;
     canvas.height = window.innerHeight * dpr;
     canvas.style.width = window.innerWidth + 'px';
