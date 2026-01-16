@@ -16,7 +16,7 @@
             touch-action: none;
             user-select: none;
             -webkit-user-select: none;
-            background-image: url('https://github.com/viqihakbarrr-cyber/kkk/blob/main/BG.jpg?raw=true');
+            background-image: url('https://github.com/viqihakbarrr-cyber/kkk/blob/main/BG.png?raw=true');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -29,7 +29,7 @@
             background: transparent; 
         }
 
-        #ui-layer, #lobby-screen, #loading-layer, #splash-screen {
+        #ui-layer, #lobby-screen, #loading-layer {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column;
@@ -37,20 +37,6 @@
             pointer-events: none;
         }
 
-        /* --- SPLASH SCREEN --- */
-        #splash-screen {
-            background-color: #000;
-            z-index: 9999;
-            pointer-events: auto;
-            transition: opacity 1s ease-out;
-        }
-        
-        #splash-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* Responsif mengisi layar */
-        }
-        
         #lobby-screen, #game-over, #fs-toggle {
             pointer-events: auto;
         }
@@ -95,7 +81,7 @@
             text-transform: uppercase;
         }
 
-        .progress-bar-bg {
+        .progress-bar- {
             width: 100%;
             height: 8px;
             background: rgba(0, 0, 0, 0.7);
@@ -193,11 +179,7 @@
         </div>
     </div>
 
-    <div id="splash-screen">
-        <img id="splash-image" src="https://github.com/viqihakbarrr-cyber/kkk/blob/main/splash.jpg?raw=true" alt="Splash">
-    </div>
-
-    <div id="loading-layer" class="hidden">
+        <div id="loading-layer">
         <div class="loading-container">
             <div class="loading-detail-text" id="loading-text-detail">INITIALIZING SYSTEM... 0%</div>
             
@@ -329,67 +311,18 @@ const ASSETS_URL = {
     leaf: 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/BCleaf.png?raw=true',
     moon: 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/SCpurple.png?raw=true',
     mirror: 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/SCmiror.png?raw=true',
-    back: 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/Back.png?raw=true',
-    blind: 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/FXblind.png?raw=true' // Aset Baru
+    back: 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/Back.png?raw=true'
 };
 
 const IMAGES = {};
 let assetsLoaded = false;
-
-// --- FUNGSI RESIZE (YANG HILANG) ---
-function resize() {
-    width = window.innerWidth;
-    height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-
-    // Responsif ukuran kartu (Mobile vs Desktop)
-    if (width < 600) {
-        cardW = 70; 
-        cardH = 112;
-    } else {
-        cardW = 100; 
-        cardH = 160;
-    }
-}
-
-// Tambahkan event listener agar layar menyesuaikan saat di-rotate atau window diubah ukurannya
-window.addEventListener('resize', resize);
-
-function initGameSequence() {
-    const splash = document.getElementById('splash-screen');
-    const loadingLayer = document.getElementById('loading-layer');
-    const loadingBgUrl = 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/IceLoadS.jpg?raw=true';
-
-    // 1. Preload Background Loading Screen diam-diam
-    const bgImg = new Image();
-    bgImg.src = loadingBgUrl;
-    
-    bgImg.onload = () => {
-        // Setelah BG siap, fade out splash
-        setTimeout(() => {
-            splash.style.opacity = '0';
-            setTimeout(() => {
-                splash.classList.add('hidden');
-                loadingLayer.classList.remove('hidden'); // Tampilkan loading screen
-                loadAssets(); // Mulai load asset game
-            }, 1000); // Waktu transisi fade
-        }, 1500); // Durasi splash diam sebentar
-    };
-    
-    bgImg.onerror = () => {
-        // Fallback jika bg gagal load, langsung masuk
-        splash.classList.add('hidden');
-        loadingLayer.classList.remove('hidden');
-        loadAssets();
-    };
-}
 
 function loadAssets() {
     let loadedCount = 0;
     const imgKeys = Object.keys(ASSETS_URL);
     const total = imgKeys.length + 1; // +1 untuk Audio
     
+    // Ambil elemen DOM baru
     const barFill = document.getElementById('loading-bar-fill');
     const textDetail = document.getElementById('loading-text-detail');
 
@@ -397,6 +330,7 @@ function loadAssets() {
         loadedCount++;
         const percent = Math.round((loadedCount / total) * 100);
         
+        // Update tampilan Loading Screen
         if(barFill) barFill.style.width = `${percent}%`;
         if(textDetail) textDetail.innerText = `LOADING ${itemName || 'DATA'}... (${percent}%)`;
 
@@ -410,6 +344,7 @@ function loadAssets() {
         }
     }
 
+    // Load Images
     imgKeys.forEach(key => {
         const img = new Image();
         img.src = ASSETS_URL[key];
@@ -418,6 +353,7 @@ function loadAssets() {
         IMAGES[key] = img;
     });
 
+    // Load Audio
     loadAudioBuffer().then(() => updateProgress("AUDIO SYSTEM"));
 }
 
@@ -468,11 +404,10 @@ let dragIdx = -1;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 
-// Variabel Efek Baru
-let blindTurns = 0; // Menghitung durasi efek moon
+let blindMode = false;
+let blindIntensity = 0; 
 let mustPlayBasic = false; 
 let canParry = false; 
-
 
 // Fullscreen Logic
 document.addEventListener('fullscreenchange', () => {
@@ -568,45 +503,35 @@ class Card {
         let showFace = (forceFaceUp !== undefined) ? forceFaceUp : this.isFaceUp;
 
         if (showFace) {
-            // LOGIKA VISUAL MOON BARU
-            // Jika terkena efek blind, semua kartu yang terbuka (FaceUp) dirender sebagai FXblind
-            if (blindTurns > 0 && IMAGES.blind) {
-                ctx.shadowColor = COLORS.moon; ctx.shadowBlur = 15;
-                ctx.drawImage(IMAGES.blind, -drawW/2, -drawH/2, drawW, drawH);
-                ctx.shadowBlur = 0;
+            if(this.suit === 'moon') {
+                ctx.shadowColor = COLORS.moon; ctx.shadowBlur = 20;
+            } else if (this.suit === 'mirror') {
+                ctx.shadowColor = COLORS.mirror; ctx.shadowBlur = 20;
             } else {
-                // Tampilan Normal
-                if(this.suit === 'moon') {
-                    ctx.shadowColor = COLORS.moon; ctx.shadowBlur = 20;
-                } else if (this.suit === 'mirror') {
-                    ctx.shadowColor = COLORS.mirror; ctx.shadowBlur = 20;
-                } else {
-                    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = (this.isSelected || this.isDragging) ? 25 : 5;
-                }
-                ctx.shadowOffsetY = (this.isSelected || this.isDragging) ? 15 : 5;
+                ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = (this.isSelected || this.isDragging) ? 25 : 5;
+            }
+            ctx.shadowOffsetY = (this.isSelected || this.isDragging) ? 15 : 5;
 
-                if (IMAGES[this.suit]) {
-                    ctx.drawImage(IMAGES[this.suit], -drawW/2, -drawH/2, drawW, drawH);
-                } else {
-                    ctx.fillStyle = '#fff'; ctx.fillRect(-drawW/2, -drawH/2, drawW, drawH);
-                }
-                ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+            if (IMAGES[this.suit]) {
+                ctx.drawImage(IMAGES[this.suit], -drawW/2, -drawH/2, drawW, drawH);
+            } else {
+                ctx.fillStyle = '#fff'; ctx.fillRect(-drawW/2, -drawH/2, drawW, drawH);
+            }
+            ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-                if (this.suit !== 'moon' && this.suit !== 'mirror') {
-                    ctx.fillStyle = "#FFFFFF"; ctx.strokeStyle = "#000000"; ctx.lineWidth = 2; 
-                    let fontSize = drawW * 0.18; 
-                    ctx.font = `700 ${fontSize}px 'Cinzel', serif`;
-                    let padX = drawW * 0.12; let padY = drawH * 0.1;
-                    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-                    ctx.strokeText(this.value, -drawW/2 + padX, -drawH/2 + padY);
-                    ctx.fillText(this.value, -drawW/2 + padX, -drawH/2 + padY);
-                    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-                    ctx.strokeText(this.value, drawW/2 - padX, drawH/2 - padY);
-                    ctx.fillText(this.value, drawW/2 - padX, drawH/2 - padY);
-                }
+            if (this.suit !== 'moon' && this.suit !== 'mirror') {
+                ctx.fillStyle = "#FFFFFF"; ctx.strokeStyle = "#000000"; ctx.lineWidth = 2; 
+                let fontSize = drawW * 0.18; 
+                ctx.font = `700 ${fontSize}px 'Cinzel', serif`;
+                let padX = drawW * 0.12; let padY = drawH * 0.1;
+                ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+                ctx.strokeText(this.value, -drawW/2 + padX, -drawH/2 + padY);
+                ctx.fillText(this.value, -drawW/2 + padX, -drawH/2 + padY);
+                ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+                ctx.strokeText(this.value, drawW/2 - padX, drawH/2 - padY);
+                ctx.fillText(this.value, drawW/2 - padX, drawH/2 - padY);
             }
         } else {
-            // Tampilan Belakang (Tetap Normal)
             ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 5;
             if(IMAGES.back) {
                 ctx.drawImage(IMAGES.back, -drawW/2, -drawH/2, drawW, drawH);
@@ -616,7 +541,6 @@ class Card {
         }
         ctx.restore();
     }
-
 
     startFlip() { this.flipping = true; }
 }
@@ -1006,6 +930,8 @@ function cancelMatchmaking() {
     resetLobby();
 }
 
+// --- REMATCH LOGIC (Updated for matchmaking) ---
+
 function requestRematch() {
     if(!rematchMe) {
         rematchMe = true;
@@ -1031,17 +957,45 @@ function resetGameVars() {
     document.getElementById('btn-rematch').innerText = "REMATCH";
     document.getElementById('rematch-msg').classList.add('hidden');
     projectiles = [];
-    blindTurns = 0; mustPlayBasic = false; canParry = false;
+    blindMode = false; blindIntensity = 0; mustPlayBasic = false; canParry = false;
 }
 
+function requestRematch() {
+    if(!rematchMe) {
+        rematchMe = true;
+        document.getElementById('btn-rematch').classList.add('btn-secondary');
+        document.getElementById('btn-rematch').innerText = "REQUESTED";
+        document.getElementById('rematch-msg').classList.remove('hidden');
+        if(conn) conn.send({ type: 'REQUEST_REMATCH' });
+        checkRematchStart();
+    }
+}
+
+function checkRematchStart() {
+    if(rematchMe && rematchOpp) {
+        document.getElementById('game-over').style.display = 'none';
+        resetGameVars();
+        if(isHost) startMultiplayerGame();
+    }
+}
+
+function resetGameVars() {
+    rematchMe = false; rematchOpp = false;
+    document.getElementById('btn-rematch').classList.remove('btn-secondary');
+    document.getElementById('btn-rematch').innerText = "REMATCH";
+    document.getElementById('rematch-msg').classList.add('hidden');
+    projectiles = [];
+    blindMode = false; blindIntensity = 0; mustPlayBasic = false; canParry = false;
+}
+
+// --- DATA HANDLING ---
 function handleNetworkData(data) {
     if (data.type === 'START_GAME') {
         resetGameVars();
         document.getElementById('lobby-screen').classList.add('hidden');
         document.getElementById('lobby-connecting').classList.add('hidden');
         document.getElementById('game-over').style.display = 'none';
-        hideLoading(); 
-        gameState = 'PLAYING';
+        hideLoading(); gameState = 'PLAYING';
         turn = data.turn === 'p2' ? 'me' : 'opponent';
         let myStartCards = data.p2Hand.map(c => new Card(c.suit, c.value, true));
         let topCard = new Card(data.topDiscard.suit, data.topDiscard.value, true);
@@ -1052,56 +1006,478 @@ function handleNetworkData(data) {
         let c = new Card('fire', 1, false); 
         c.x = 60; c.y = height/2 + 30; c.isFaceUp = false;
         opponentHand.push(c);
-        recalcOpponentHand();
+        
+        // Force opponent cards to recalculate positions immediately
+        let oppScale = 0.8;
+        let oppW = cardW * oppScale;
+        let oppH = cardH * oppScale;
+        let oppSpread = Math.min(width / (opponentHand.length + 2), oppW * 0.8);
+        let oppStart = width/2 - ((opponentHand.length - 1) * oppSpread) / 2;
+        opponentHand.forEach((c, i) => {
+            c.targetX = oppStart + i * oppSpread; 
+            c.targetY = oppH * 0.6;
+        });
+        
         playSound('deal');
         showFloatingText("Opponent Drew", width/2, 100, "#aaa");
         turn = 'me';
-        if(blindTurns > 0) {
-            blindTurns--;
-            if(blindTurns === 0) showFloatingText("VISION RESTORED", width/2, height/2, "#fff");
-        }
     } else if (data.type === 'MOON_ATTACK') {
-        processOpponentMove(data.card, false);
-        blindTurns = 3;
-        spawnExplosion(width/2, height/2, COLORS.moon);
-        playSound('moon');
-        showFloatingText("CURSED! (3 TURNS)", width/2, height/2, COLORS.moon);
-        turn = 'me'; 
+        if(opponentHand.length > 0) opponentHand.pop();
+        // Force opponent cards to recalculate positions immediately
+        let oppScale = 0.8;
+        let oppW = cardW * oppScale;
+        let oppH = cardH * oppScale;
+        let oppSpread = Math.min(width / (opponentHand.length + 2), oppW * 0.8);
+        let oppStart = width/2 - ((opponentHand.length - 1) * oppSpread) / 2;
+        opponentHand.forEach((c, i) => {
+            c.targetX = oppStart + i * oppSpread; 
+            c.targetY = oppH * 0.6;
+        });
+        
+        let moonC = new Card('moon', 0, false); moonC.x = width/2; moonC.y = -100;
+        moonC.targetX = width/2; moonC.targetY = height/2;
+        discardPile.push(moonC);
+        setTimeout(() => {
+            spawnExplosion(width/2, height/2, COLORS.moon); playSound('moon');
+            blindMode = true; blindIntensity = 1.0; 
+            showFloatingText("BLINDED!", width/2, height/2, "#FFF");
+        }, 300);
+    } else if (data.type === 'MOON_FOLLOWUP') {
+        processOpponentMove(data.card, data.isCrit);
+        showFloatingText("ONE SHOT CHANCE", width/2, height/2 + 50, "red");
+    } else if (data.type === 'BLIND_CLEARED') {
+        blindMode = false; blindIntensity = 0;
+        showFloatingText("DARKNESS FADED", width/2, height/2, "#FFF");
+        processOpponentMove(data.card, data.isCrit);
+    } else if (data.type === 'BLIND_FAIL') {
+        showFloatingText("MISSED!", width/2, 150, "red"); turn = 'me'; 
     } else if (data.type === 'PARRY_SUCCESS') {
         projectiles = []; 
         showFloatingText("PARRIED!", width/2, height/2, COLORS.mirror);
         playSound('parry');
         spawnProjectiles(true, false);
-        if (opponentHand.length > 0) {
-            opponentHand.pop(); 
-            recalcOpponentHand();
+        
+        // Handle opponent's mirror card removal from their hand
+        if (data.card && data.card.suit === 'mirror') {
+            // Remove the mirror card from opponent's hand visually
+            if (opponentHand.length > 0) {
+                opponentHand.pop(); // Remove the card they used for parry
+                
+                // Force opponent cards to recalculate positions immediately
+                let oppScale = 0.8;
+                let oppW = cardW * oppScale;
+                let oppH = cardH * oppScale;
+                let oppSpread = Math.min(width / (opponentHand.length + 2), oppW * 0.8);
+                let oppStart = width/2 - ((opponentHand.length - 1) * oppSpread) / 2;
+                opponentHand.forEach((c, i) => {
+                    c.targetX = oppStart + i * oppSpread; 
+                    c.targetY = oppH * 0.6;
+                });
+            }
+            // Add the mirror card to discard pile to show it was played
+            let mirrorCard = new Card('mirror', 0, false);
+            mirrorCard.x = width/2; mirrorCard.y = -100;
+            mirrorCard.targetX = width/2; mirrorCard.targetY = height/2;
+            discardPile.push(mirrorCard);
         }
-        let mirrorCard = new Card('mirror', 0, false);
-        mirrorCard.x = width/2; mirrorCard.y = -100;
-        mirrorCard.targetX = width/2; mirrorCard.targetY = height/2;
-        discardPile.push(mirrorCard);
     } else if (data.type === 'REQUEST_REMATCH') {
         rematchOpp = true;
         showFloatingText("Opponent wants rematch!", width/2, height/2, "#fff");
         checkRematchStart();
     } else if (data.type === 'PENALTY_SYNC') {
-        let c = new Card('fire', 1, false); 
-        c.x = width/2; c.y = 0; 
-        opponentHand.push(c);
-        recalcOpponentHand();
-        showFloatingText("Opponent Hit!", width/2, 100, "red");
+        // Handle penalty sync from opponent (used in projectile system)
+        console.log('Penalty sync received');
+    }
+}
+
+// --- GAME LOGIC ---
+function startMultiplayerGame() {
+    console.log("Starting Multiplayer Game Logic...");
+    document.getElementById('lobby-screen').classList.add('hidden');
+    gameState = 'PLAYING';
+    
+    function generateHand() {
+        let h = [];
+        h.push({suit: 'fire', value: Math.ceil(Math.random()*9)});
+        h.push({suit: 'water', value: Math.ceil(Math.random()*9)});
+        h.push({suit: 'leaf', value: Math.ceil(Math.random()*9)});
+        h.push({suit: 'moon', value: 0});
+        h.push({suit: 'mirror', value: 0});
+        
+        let r = Math.random();
+        if(r < 0.1) h.push({suit: 'moon', value:0});
+        else if(r < 0.2) h.push({suit: 'mirror', value:0});
+        else {
+            let s = BASIC_SUITS[Math.floor(Math.random()*3)];
+            h.push({suit: s, value: Math.ceil(Math.random()*9)});
+        }
+        
+        for (let i = h.length - 1; i > 0; i--) { 
+            const j = Math.floor(Math.random() * (i + 1)); 
+            [h[i], h[j]] = [h[j], h[i]]; 
+        }
+        return h;
+    }
+
+    let p1H = generateHand();
+    let p2H = generateHand();
+    let deckCount = 30; 
+    let top = {suit: BASIC_SUITS[Math.floor(Math.random()*3)], value: Math.ceil(Math.random()*9)};
+    
+    let myStartCards = p1H.map(c => new Card(c.suit, c.value, true));
+    let topCardObj = new Card(top.suit, top.value, true);
+    turn = Math.random() > 0.5 ? 'me' : 'opponent';
+
+    conn.send({
+        type: 'START_GAME', deckCount: deckCount, topDiscard: top,
+        p1HandCount: 6, p2Hand: p2H, turn: turn === 'me' ? 'p1' : 'p2'
+    });
+    playDealAnimation(myStartCards, 6, topCardObj);
+}
+
+function playDealAnimation(myCards, oppCount, topCard) {
+    isAnimating = true; myHand = []; opponentHand = []; discardPile = [];
+    let dealSpeed = 100; let totalCards = myCards.length + oppCount; let dealt = 0;
+    
+    let dealInterval = setInterval(() => {
+        if (dealt >= totalCards) {
+            clearInterval(dealInterval);
+            setTimeout(() => {
+                topCard.x = 60; topCard.y = height/2 + 30; discardPile.push(topCard);
+                playSound('play'); isAnimating = false;
+                setTimeout(() => { showFloatingText(turn === 'me' ? "YOUR TURN" : "OPPONENT'S TURN", width/2, height/2 + 100, turn==='me'?"#0f0":"#fff"); }, 500);
+            }, 300);
+            return;
+        }
+        
+        let c;
+        if (dealt % 2 === 0) {
+            c = new Card('fire', 1, false); 
+            c.x = 60; c.y = height/2 + 30; c.isFaceUp = false;
+            opponentHand.push(c);
+        } else {
+            let cardIndex = Math.floor(dealt / 2);
+            if (myCards[cardIndex]) {
+                c = myCards[cardIndex]; 
+                c.x = 60; c.y = height/2 + 30;
+                c.isFaceUp = false; 
+                myHand.push(c);
+            }
+        }
+        playSound('deal'); dealt++;
+    }, dealSpeed);
+}
+
+function isValidMove(card, topCard) {
+    if (card.suit === 'mirror') return true; 
+    if (card.suit === 'moon') return true; 
+    if (topCard.suit === 'moon' || topCard.suit === 'mirror') return true; 
+    return card.suit === topCard.suit || card.value === topCard.value;
+}
+
+function playerInput(cardIndex) {
+    if (gameState !== 'PLAYING' || isAnimating) return false;
+    
+    let card = myHand[cardIndex];
+    let top = discardPile[discardPile.length - 1];
+    card.isDragging = false; 
+
+    // --- LOGIKA PARRY ---
+    if (canParry) {
+        if (card.suit === 'mirror') {
+            executeMove(cardIndex, card, top, false);
+            projectiles.forEach(p => { p.speed = 15; p.targetIsMe = false; p.isSlow = false; }); 
+            showFloatingText("MIRROR PARRY!", width/2, height/2, COLORS.mirror);
+            playSound('parry');
+            canParry = false;
+            conn.send({ type: 'PARRY_SUCCESS', card: { suit: card.suit, value: card.value } });
+            return true;
+        } else {
+            showFloatingText("USE MIRROR!", card.x, card.y - 70, "red");
+            card.shake = 20; playSound('error');
+            return false;
+        }
+    }
+
+    if (turn !== 'me') return false;
+
+    if (blindMode && blindIntensity === 1.0) {
+        if (isValidMove(card, top)) {
+            executeMove(cardIndex, card, top, false);
+            blindMode = false; blindIntensity = 0;
+            conn.send({ 
+                type: 'BLIND_CLEARED', card: { suit: card.suit, value: card.value },
+                isCrit: (COUNTER_MAP[card.suit] === top.suit)
+            });
+            return true;
+        } else {
+            card.shake = 30; playSound('error');
+            showFloatingText("WRONG CARD!", card.x, card.y - 70, "red");
+            turn = 'opponent'; 
+            conn.send({ type: 'BLIND_FAIL' });
+            return false;
+        }
+    }
+
+    if (mustPlayBasic) {
+        if (card.suit === 'moon' || card.suit === 'mirror') {
+            card.shake = 20; showFloatingText("Basic Card Only!", card.x, card.y - 70, "red");
+            return false;
+        }
+        if (!BASIC_SUITS.includes(card.suit)) return false;
+    }
+
+    if (isValidMove(card, top)) {
+        if (card.suit === 'moon') {
+            executeMove(cardIndex, card, top, false);
+            spawnExplosion(width/2, height/2, COLORS.moon);
+            playSound('moon');
+            canParry = false; 
+            blindMode = true; 
+            blindIntensity = 0.1; 
+            mustPlayBasic = true; 
+            turn = 'me'; 
+            showFloatingText("EXTRA TURN (Basic Only)", width/2, height/2 + 100, COLORS.moon);
+            conn.send({ type: 'MOON_ATTACK' });
+        } else if (card.suit === 'mirror') {
+            executeMove(cardIndex, card, top, false);
+            playSound('play');
+            turn = 'me'; 
+            showFloatingText("EXTRA TURN", width/2, height/2 + 100, COLORS.mirror);
+            conn.send({ type: 'OPPONENT_MOVE', card: {suit: card.suit, value: card.value}, isCrit: false }); 
+        } else {
+            let isCrit = COUNTER_MAP[card.suit] === top.suit;
+            executeMove(cardIndex, card, top, isCrit);
+            if (mustPlayBasic) {
+                mustPlayBasic = false;
+                conn.send({ type: 'MOON_FOLLOWUP', card: { suit: card.suit, value: card.value }, isCrit: isCrit });
+                turn = 'opponent'; 
+            } else {
+                conn.send({ type: 'OPPONENT_MOVE', card: { suit: card.suit, value: card.value }, isCrit: isCrit });
+                turn = 'opponent';
+            }
+        }
+        if(myHand.length === 0) endGame("YOU WIN!", "Victory Achieved");
+        return true;
+    } else {
+        card.shake = 20;
+        showFloatingText("Invalid Move", card.x, card.y - 50, "red");
+        playSound('error');
+        return false;
+    }
+}
+
+function executeMove(index, card, top, isCrit) {
+    card.isSelected = false;
+    selectedIdx = -1;
+
+    myHand.splice(index, 1);
+    discardPile.push(card);
+    card.targetX = width/2; 
+    card.targetY = height/2;
+    card.isAnimatingPos = false; 
+    playSound('play');
+
+    if(isCrit) {
+        playSound('crit');
+        showFloatingText("CRITICAL! (+2)", width/2, height/2 - 50, COLORS[card.suit]);
+    }
+}
+
+function spawnProjectiles(targetIsMe, slowMotion) {
+    projectiles.push(new ProjectileCard(targetIsMe, slowMotion));
+    setTimeout(() => projectiles.push(new ProjectileCard(targetIsMe, slowMotion)), 200);
+}
+
+function processOpponentMove(cardData, isCrit) {
+    let card = new Card(cardData.suit, cardData.value, false);
+    
+    // Remove card from opponent's hand BEFORE checking for mirror special case
+    if(opponentHand.length > 0) opponentHand.pop();
+    
+    // Force opponent cards to recalculate positions immediately
+    let oppScale = 0.8;
+    let oppW = cardW * oppScale;
+    let oppH = cardH * oppScale;
+    let oppSpread = Math.min(width / (opponentHand.length + 2), oppW * 0.8);
+    let oppStart = width/2 - ((opponentHand.length - 1) * oppSpread) / 2;
+    opponentHand.forEach((c, i) => {
+        c.targetX = oppStart + i * oppSpread; 
+        c.targetY = oppH * 0.6;
+    });
+    
+    card.x = width/2; card.y = -100;
+    card.targetX = width/2; card.targetY = height/2;
+    discardPile.push(card);
+    playSound('play');
+    
+    if(cardData.suit === 'mirror') {
+        showFloatingText("OPPONENT MIRROR!", width/2, height/2, COLORS.mirror);
+        turn = 'opponent'; 
+        return;
+    }
+
+    if(isCrit) {
+        playSound('crit'); showFloatingText("CRITICAL INCOMING!", width/2, height/2 - 50, COLORS[cardData.suit]);
+        
+        let hasMirror = myHand.some(c => c.suit === 'mirror');
+        
+        if (hasMirror) {
+            spawnProjectiles(true, true); 
+            canParry = true;
+            showFloatingText("USE MIRROR TO PARRY!", width/2, height/2 + 50, "#00FFFF");
+        } else {
+            spawnProjectiles(true, false); 
+        }
+    }
+    
+    setTimeout(() => { if(opponentHand.length === 0) endGame("YOU LOSE", "Opponent cleared their hand"); }, 500);
+    turn = 'me';
+}
+
+function requestDraw() {
+    if (gameState !== 'PLAYING' || turn !== 'me' || isAnimating || canParry) return;
+    
+    let newCard;
+    if(isHost) newCard = drawCardFromDeckLogic();
+    else {
+        let r = Math.random();
+        if(r < 0.05) newCard = new Card('moon', 0, true);
+        else if (r < 0.08) newCard = new Card('mirror', 0, true);
+        else {
+            let s = BASIC_SUITS[Math.floor(Math.random()*3)]; let v = Math.floor(Math.random()*9)+1;
+            newCard = new Card(s, v, true);
+        }
+    }
+
+    if(newCard) {
+        newCard.x = 60; 
+        newCard.y = height/2 + 30; 
+        newCard.isFaceUp = false; 
+        
+        myHand.push(newCard); 
+        playSound('deal');
+        
+        if (mustPlayBasic) {
+            mustPlayBasic = false; conn.send({ type: 'OPPONENT_DRAW' }); turn = 'opponent';
+            showFloatingText("Combo Skipped", width/2, height/2, "#aaa");
+        } else {
+            conn.send({ type: 'OPPONENT_DRAW' }); turn = 'opponent'; showFloatingText("Turn Ended", width/2, height/2, "#aaa");
+        }
+    }
+}
+
+function drawCardFromDeckLogic() {
+    let r = Math.random(); 
+    if(r < 0.05) return new Card('moon', 0, true);
+    if(r < 0.08) return new Card('mirror', 0, true);
+    let s = BASIC_SUITS[Math.floor(Math.random()*3)]; let v = Math.floor(Math.random()*9)+1;
+    return new Card(s, v, true);
+}
+
+function spawnExplosion(x, y, color) { for(let i=0; i<30; i++) particles.push(new Particle(x, y, color, true)); }
+
+function endGame(title, subtitle) {
+    gameState = 'GAMEOVER';
+    document.getElementById('winner-text').innerText = title;
+    document.getElementById('sub-winner-text').innerText = subtitle;
+    document.getElementById('game-over').style.display = 'block';
+}
+
+// --- RENDER LOOP ---
+function draw() {
+    ctx.clearRect(0, 0, canvas.width / (window.devicePixelRatio||1), canvas.height / (window.devicePixelRatio||1));
+    
+    projectiles.forEach(p => p.draw(ctx));
+
+    let deckX = 60; let deckY = height / 2 + 30;
+    if (IMAGES.back) {
+        let stackHeight = 15;
+        for (let i = 0; i < stackHeight; i++) {
+            let off = i * 0.5; 
+            ctx.save();
+            ctx.translate(deckX - off, deckY - off);
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = i === stackHeight - 1 ? 5 : 0; 
+            ctx.drawImage(IMAGES.back, -cardW/2, -cardH/2, cardW, cardH);
+            ctx.restore();
+        }
+    } else {
+        ctx.fillStyle = '#333'; ctx.fillRect(deckX - cardW/2, deckY - cardH/2, cardW, cardH);
+    }
+
+    if (discardPile.length > 0) {
+        let startIdx = Math.max(0, discardPile.length - 3);
+        for(let i = startIdx; i < discardPile.length; i++) {
+            let c = discardPile[i];
+            
+            c.targetX = width/2;
+            c.targetY = height/2;
+
+            if(!isAnimating && Math.abs(c.x - width/2) < 5) c.x = width/2;
+            if(!isAnimating && Math.abs(c.y - height/2) < 5) c.y = height/2;
+            
+            c.draw(ctx, true, undefined, undefined, cardW, cardH);
+        }
+    } else {
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 2;
+        roundRect(ctx, width/2 - cardW/2, height/2 - cardH/2, cardW, cardH, 10); ctx.stroke();
+    }
+
+    let oppScale = 0.8;
+    let oppW = cardW * oppScale;
+    let oppH = cardH * oppScale;
+    let oppSpread = Math.min(width / (opponentHand.length + 2), oppW * 0.8);
+    let oppStart = width/2 - ((opponentHand.length - 1) * oppSpread) / 2;
+    
+    opponentHand.forEach((c, i) => {
+        c.targetX = oppStart + i * oppSpread; 
+        c.targetY = oppH * 0.6; 
+        c.draw(ctx, false, undefined, undefined, oppW, oppH);
+    });
+
+    if (blindMode) { ctx.fillStyle = `rgba(0, 0, 0, ${blindIntensity})`; ctx.fillRect(0, 0, width, height); }
+
+    let pSpread = Math.min(width / (myHand.length + 1), cardW + 10);
+    let pStart = width/2 - ((myHand.length - 1) * pSpread) / 2;
+    let handYOffset = (blindMode && blindIntensity === 1.0) ? -50 : 0;
+    
+    myHand.forEach((c, i) => {
+        if (!c.isDragging && !c.isAnimatingPos) {
+            c.targetX = pStart + i * pSpread;
+            let baseHeight = height - (cardH * 0.5); 
+            if (c.isSelected) baseHeight = height - (cardH * 1.0);
+            else if (c.isHovered) baseHeight = height - (cardH * 0.65);
+            c.targetY = baseHeight + handYOffset;
+        }
+        
+        if (i !== dragIdx) {
+            c.draw(ctx, undefined, undefined, undefined, cardW, cardH);
+        }
+    });
+
+    if (dragIdx !== -1 && myHand[dragIdx]) {
+        let c = myHand[dragIdx];
+        c.draw(ctx, undefined, c.x, c.y, cardW, cardH);
+    }
+
+    particles.forEach(p => p.draw(ctx));
+    floatingTexts.forEach(t => t.draw(ctx));
+
+    if(gameState === 'PLAYING' && !isAnimating) {
+        ctx.font = "bold 16px Orbitron"; ctx.fillStyle = turn === 'me' ? '#00FF00' : '#888'; ctx.textAlign = 'center';
+        let txt = turn === 'me' ? "YOUR TURN" : "OPPONENT'S TURN";
+        if(mustPlayBasic) txt = "COMBO: PLAY BASIC CARD!";
+        if(canParry) txt = "!!! PARRY CHANCE !!!";
+        if(blindMode && blindIntensity === 1.0 && turn === 'me') txt = "GUESS THE CARD!";
+        ctx.fillText(txt, width/2, height/2 + cardH/2 + 50);
     }
 }
 
 function update() {
-    for (let i = particles.length - 1; i >= 0; i--) { 
-        particles[i].update(); 
-        if (particles[i].life <= 0) particles.splice(i, 1); 
-    }
-    for (let i = floatingTexts.length - 1; i >= 0; i--) { 
-        floatingTexts[i].update(); 
-        if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); 
-    }
+    for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(); if (particles[i].life <= 0) particles.splice(i, 1); }
+    for (let i = floatingTexts.length - 1; i >= 0; i--) { floatingTexts[i].update(); if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); }
+    
     for (let i = projectiles.length - 1; i >= 0; i--) {
         let p = projectiles[i];
         p.update();
@@ -1109,408 +1485,172 @@ function update() {
             if (p.targetIsMe) {
                 let c = drawCardFromDeckLogic();
                 c.x = width/2; c.y = height; c.isFaceUp = false;
-                myHand.push(c); 
-                playSound('deal');
+                myHand.push(c); playSound('deal');
                 conn.send({ type: 'PENALTY_SYNC' }); 
                 canParry = false; 
             } else {
-                let c = new Card('fire', 1, false); 
-                c.x = width/2; c.y = 0;
+                let c = new Card('fire', 1, false); c.x = width/2; c.y = 0;
                 opponentHand.push(c);
-                recalcOpponentHand(); 
+                
+                // Force opponent cards to recalculate positions immediately
+                let oppScale = 0.8;
+                let oppW = cardW * oppScale;
+                let oppH = cardH * oppScale;
+                let oppSpread = Math.min(width / (opponentHand.length + 2), oppW * 0.8);
+                let oppStart = width/2 - ((opponentHand.length - 1) * oppSpread) / 2;
+                opponentHand.forEach((c, i) => {
+                    c.targetX = oppStart + i * oppSpread; 
+                    c.targetY = oppH * 0.6;
+                });
+                
                 playSound('deal');
             }
             projectiles.splice(i, 1);
         }
     }
 }
+function loop() { update(); draw(); requestAnimationFrame(loop); }
 
-function draw() {
-    ctx.clearRect(0, 0, width, height);
-    if (gameState === 'LOBBY') return;
+function resize() { 
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.scale(dpr, dpr);
+    width = window.innerWidth; height = window.innerHeight;
 
-    discardPile.forEach(c => c.draw(ctx));
-    opponentHand.forEach(c => c.draw(ctx, false)); 
-    myHand.forEach(c => c.draw(ctx));
-    
-    particles.forEach(p => p.draw(ctx));
-    projectiles.forEach(p => p.draw(ctx));
-    floatingTexts.forEach(f => f.draw(ctx));
-
-    if (turn === 'me' && gameState === 'PLAYING') {
-        ctx.strokeStyle = '#00FFFF'; ctx.lineWidth = 4;
-        ctx.strokeRect(10, height - cardH - 30, width - 20, cardH + 20);
-    }
+    let refWidth = Math.min(width, 500);
+    cardScale = refWidth / 500; 
+    cardW = Math.max(60, 100 * cardScale); 
+    cardH = cardW / CARD_RATIO;
 }
 
-function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-}
-
-function endGame(title, subtitle) {
-    gameState = 'GAMEOVER';
-    blindTurns = 0;
-    mustPlayBasic = false;
-    canParry = false;
-    projectiles = [];
-    document.getElementById('winner-text').innerText = title;
-    document.getElementById('sub-winner-text').innerText = subtitle;
-    document.getElementById('game-over').style.display = 'block';
-}
-
-function restartGame() {
-    if (!conn) return;
-    rematchMe = true;
-    document.getElementById('btn-rematch').innerText = "WAITING...";
-    document.getElementById('btn-rematch').classList.add('btn-secondary');
-    conn.send({ type: 'REQUEST_REMATCH' });
-    checkRematchStart();
-}
-
-function checkRematchStart() {
-    if (rematchMe && rematchOpp) {
-        if (peer.id < conn.peer) {
-            startNewMatch();
-        }
-        document.getElementById('rematch-msg').classList.remove('hidden');
-    }
-}
-
-function startNewMatch() {
-    deck = createDeck();
-    shuffle(deck);
-    let p1Hand = deck.splice(0, 7);
-    let p2Hand = deck.splice(0, 7);
-    let topDiscard = deck.pop();
-    let firstTurn = Math.random() < 0.5 ? 'p1' : 'p2';
-
-    let startData = { type: 'START_GAME', p1HandCount: p1Hand.length, p2Hand: p2Hand, topDiscard: topDiscard, turn: firstTurn };
-    conn.send(startData);
-
-    resetGameVars();
-    document.getElementById('game-over').style.display = 'none';
-    gameState = 'PLAYING';
-    turn = firstTurn === 'p1' ? 'me' : 'opponent';
-    let myStartCards = p1Hand.map(c => new Card(c.suit, c.value, true));
-    let topCard = new Card(topDiscard.suit, topDiscard.value, true);
-    playDealAnimation(myStartCards, p2Hand.length, topCard);
-}
-// ======================================================
-// BAGIAN KODE YANG HILANG (GAMEPLAY LOGIC)
-// ======================================================
-
-class FloatingText {
-    constructor(text, x, y, color) {
-        this.text = text; this.x = x; this.y = y; this.color = color;
-        this.life = 1.0; this.vy = -2;
-    }
-    update() { this.y += this.vy; this.life -= 0.02; }
-    draw(ctx) {
-        ctx.globalAlpha = Math.max(0, this.life);
-        ctx.fillStyle = this.color; ctx.font = "bold 24px Orbitron";
-        ctx.textAlign = "center"; ctx.fillText(this.text, this.x, this.y);
-        ctx.globalAlpha = 1;
-    }
-}
-
-function showFloatingText(text, x, y, color) {
-    floatingTexts.push(new FloatingText(text, x, y, color));
-}
-
-function createDeck() {
-    let d = [];
-    SUITS.forEach(s => {
-        let limit = (s === 'moon' || s === 'mirror') ? 4 : 9; // Kartu spesial lebih sedikit
-        for (let v = 1; v <= limit; v++) {
-            d.push({ suit: s, value: v });
-            if (s !== 'moon' && s !== 'mirror') d.push({ suit: s, value: v }); // Basic cards double
-        }
-    });
-    return d;
-}
-
-function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-}
-
-// Fungsi Host memulai game
-function startMultiplayerGame() {
-    deck = createDeck();
-    shuffle(deck);
-    
-    // Deal 7 kartu ke masing-masing
-    let p1HandCards = deck.splice(0, 7);
-    let p2HandCards = deck.splice(0, 7);
-    let topDiscard = deck.pop();
-    
-    // Tentukan giliran random
-    let startingTurn = Math.random() < 0.5 ? 'p1' : 'p2';
-
-    // Kirim data ke Client (Guest)
-    if (conn && conn.open) {
-        conn.send({
-            type: 'START_GAME',
-            p1HandCount: 7, // Host hand count seen by guest
-            p2Hand: p2HandCards, // Guest's actual cards
-            topDiscard: topDiscard,
-            turn: startingTurn
-        });
-    }
-
-    // Setup Host (Local)
-    gameState = 'PLAYING';
-    turn = (startingTurn === 'p1') ? 'me' : 'opponent';
-    
-    // Konversi data kartu mentah ke Class Card
-    let myStartCards = p1HandCards.map(c => new Card(c.suit, c.value, true));
-    let topCardObj = new Card(topDiscard.suit, topDiscard.value, true);
-    
-    playDealAnimation(myStartCards, 7, topCardObj);
-}
-
-function playDealAnimation(myCards, oppCount, topCard) {
-    // Reset kondisi
-    myHand = [];
-    opponentHand = [];
-    discardPile = [topCard];
-    
-    topCard.x = width/2; topCard.y = height/2;
-    topCard.isFaceUp = true;
-
-    // Animasi kartu lawan
-    for(let i=0; i<oppCount; i++) {
-        let c = new Card('fire', 0, false); // Dummy card
-        c.x = width; c.y = 0;
-        opponentHand.push(c);
-    }
-    recalcOpponentHand();
-
-    // Animasi kartu kita
-    let delay = 0;
-    myCards.forEach((c, index) => {
-        c.x = 0; c.y = height;
-        setTimeout(() => {
-            myHand.push(c);
-            playSound('deal');
-            recalcHand();
-        }, delay);
-        delay += 100;
-    });
-}
-
-function recalcHand() {
-    let totalW = myHand.length * (cardW * 0.6);
-    let startX = (width - totalW) / 2 + cardW/2;
-    
-    myHand.forEach((c, i) => {
-        let tx = startX + i * (cardW * 0.6);
-        let ty = height - cardH/2 - 20;
-        
-        // Jika sedang di-hover naik sedikit
-        if (c.isHovered && !c.isDragging) ty -= 30;
-        
-        // Pindahkan hanya jika tidak sedang di-drag user
-        if (!c.isDragging) {
-            c.targetX = tx;
-            c.targetY = ty;
-        }
-    });
-}
-
-function recalcOpponentHand() {
-    let totalW = opponentHand.length * (cardW * 0.4); // Lebih rapat
-    let startX = (width - totalW) / 2 + cardW/2;
-    
-    opponentHand.forEach((c, i) => {
-        c.targetX = startX + i * (cardW * 0.4);
-        c.targetY = cardH/2 - 20; // Di atas layar
-    });
-}
-
-function drawCardFromDeckLogic() {
-    // Simulasi ambil kartu acak (karena deck asli ada di Host, tapi untuk visual Client side)
-    let suits = ['fire', 'water', 'leaf'];
-    let rndSuit = suits[Math.floor(Math.random()*suits.length)];
-    let rndVal = Math.floor(Math.random()*9)+1;
-    return new Card(rndSuit, rndVal, true);
-}
-
-function spawnExplosion(x, y, color) {
-    for(let i=0; i<20; i++) {
-        particles.push(new Particle(x, y, color, true));
-    }
-}
-
-function spawnProjectiles(isMe, isSlow) {
-    // Spawn kartu yang menyerang
-    let p = new ProjectileCard(isMe, isSlow);
-    projectiles.push(p);
-}
-
-function processOpponentMove(cardData, isCrit) {
-    // Visual kartu lawan yang dibuang
-    let c = opponentHand.pop(); 
-    if(!c) { // Fallback jika sync error
-        c = new Card(cardData.suit, cardData.value, false);
-        c.x = width/2; c.y = 0;
-    }
-    
-    // Ubah data kartu dummy menjadi kartu asli yang dimainkan
-    c.suit = cardData.suit;
-    c.value = cardData.value;
-    c.isFaceUp = true; 
-    
-    discardPile.push(c);
-    c.moveTo(width/2, height/2, 500);
-    
-    recalcOpponentHand();
-    playSound('play');
-    
-    // --- TAMBAHAN PENTING: CEK APAKAH LAWAN MENANG (KARTU HABIS) ---
-    if (opponentHand.length === 0) {
-        setTimeout(() => {
-            endGame("DEFEAT", "Opponent cleared their hand!");
-        }, 1000); // Beri jeda sedikit agar animasi kartu terlihat dulu
-        return; // Hentikan fungsi agar tidak lanjut ke giliran kita
-    }
-    // -------------------------------------------------------------
-    
-    turn = 'me'; // Sekarang giliran kita
-    showFloatingText("YOUR TURN", width/2, height/2 + 50, "#00FF00");
-}
-
-
-// INPUT HANDLING (Agar bisa klik kartu)
-window.addEventListener('mousedown', handleInputStart);
-window.addEventListener('touchstart', (e) => handleInputStart(e.touches[0]), {passive: false});
-
-window.addEventListener('mousemove', handleInputMove);
-window.addEventListener('touchmove', (e) => handleInputMove(e.touches[0]), {passive: false});
-
-window.addEventListener('mouseup', handleInputEnd);
-window.addEventListener('touchend', handleInputEnd);
-
-function handleInputStart(e) {
-    if (gameState !== 'PLAYING' || turn !== 'me') return;
-    if (blindTurns > 0) return; // Tidak bisa gerak saat kena efek Moon/Blind
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    // Cek klik kartu tangan sendiri (dari paling atas/kanan)
+function getCardAt(x, y) {
     for (let i = myHand.length - 1; i >= 0; i--) {
         let c = myHand[i];
-        if (Math.abs(x - c.x) < cardW/2 && Math.abs(y - c.y) < cardH/2) {
-            dragIdx = i;
-            c.isDragging = true;
-            c.isSelected = true;
-            dragOffsetX = x - c.x;
-            dragOffsetY = y - c.y;
-            playSound('flip');
-            break;
+        if (x > c.x - cardW/2 && x < c.x + cardW/2 && 
+            y > c.y - cardH/2 && y < c.y + cardH/2) {
+            return i;
         }
     }
+    return -1;
 }
 
-function handleInputMove(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+function onPointerDown(e) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    startBGM(); // Mencoba menyalakan BGM saat interaksi pertama
+    // =====================
 
-    // Hover effect
-    myHand.forEach(c => c.isHovered = false);
-    for (let i = myHand.length - 1; i >= 0; i--) {
-        let c = myHand[i];
-        if (Math.abs(x - c.x) < cardW/2 && Math.abs(y - c.y) < cardH/2) {
-            c.isHovered = true;
-            break; 
+    if (gameState !== 'PLAYING' || isAnimating || (turn !== 'me' && !canParry)) return;
+    if (gameState !== 'PLAYING' || isAnimating || (turn !== 'me' && !canParry)) return;
+    
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    let rect = canvas.getBoundingClientRect();
+    let x = (e.clientX || e.touches[0].clientX) - rect.left;
+    let y = (e.clientY || e.touches[0].clientY) - rect.top;
+    
+    let deckX = 60; let deckY = height/2 + 30;
+    if (x > deckX - cardW/2 - 20 && x < deckX + cardW/2 + 20 &&
+        y > deckY - cardH/2 - 20 && y < deckY + cardH/2 + 20) {
+        if (!blindMode || blindIntensity < 0.5) requestDraw();
+        return;
+    }
+
+    let idx = getCardAt(x, y);
+
+    if (idx !== -1) {
+        if (selectedIdx === idx) {
+             let success = playerInput(idx);
+             if (success) {
+                 selectedIdx = -1;
+                 dragIdx = -1;
+                 return;
+             }
         }
-    }
 
-    if (dragIdx !== -1) {
-        let c = myHand[dragIdx];
-        c.x = x - dragOffsetX;
-        c.y = y - dragOffsetY;
-    }
-}
+        if (selectedIdx !== -1 && selectedIdx !== idx && myHand[selectedIdx]) {
+            myHand[selectedIdx].isSelected = false;
+        }
 
-function handleInputEnd() {
-    if (dragIdx !== -1) {
-        let c = myHand[dragIdx];
-        let top = discardPile[discardPile.length - 1];
+        selectedIdx = idx;
+        dragIdx = idx; 
         
-        // Logika Drop ke area tengah (Validasi sederhana)
+        let c = myHand[idx];
+        c.isSelected = true;
+        c.isDragging = true;
+        c.isAnimatingPos = false; 
+        
+        dragOffsetX = x - c.x;
+        dragOffsetY = y - c.y;
+        
+        playSound('deal'); 
+    } else {
+        if(selectedIdx !== -1 && myHand[selectedIdx]) {
+            myHand[selectedIdx].isSelected = false;
+            selectedIdx = -1;
+        }
+    }
+}
+
+function onPointerMove(e) {
+    let rect = canvas.getBoundingClientRect();
+    let x = (e.clientX || (e.touches ? e.touches[0].clientX : 0)) - rect.left;
+    let y = (e.clientY || (e.touches ? e.touches[0].clientY : 0)) - rect.top;
+
+    if (dragIdx !== -1) {
+        e.preventDefault(); 
+        myHand[dragIdx].x = x - dragOffsetX;
+        myHand[dragIdx].y = y - dragOffsetY;
+    } else {
+        let hovered = false;
+        for (let i = myHand.length - 1; i >= 0; i--) {
+            let c = myHand[i];
+            if (!hovered && x > c.x - cardW/2 && x < c.x + cardW/2 && 
+                y > c.y - cardH/2 && y < c.y + cardH/2) {
+                c.isHovered = true; hovered = true;
+            } else c.isHovered = false;
+        }
+    }
+}
+
+function onPointerUp(e) {
+    if (dragIdx !== -1) {
+        let c = myHand[dragIdx];
+        c.isDragging = false;
+        
         let dist = Math.hypot(c.x - width/2, c.y - height/2);
         
         if (dist < 150) {
-            // Cek Rules Uno (Warna sama, Angka sama, atau Spesial)
-            let valid = (c.suit === top.suit || c.value === top.value || 
-                         c.suit === 'mirror' || top.suit === 'mirror' || 
-                         c.suit === 'moon' || top.suit === 'moon');
-            
-            if (valid) {
-                playCard(dragIdx);
-            } else {
-                returnCardToHand(c);
-                playSound('error');
+            let success = playerInput(dragIdx);
+            if (!success) {
+                c.isAnimatingPos = false; 
             }
-        } else {
-            returnCardToHand(c);
         }
-        
-        c.isDragging = false;
-        c.isSelected = false;
         dragIdx = -1;
     }
 }
 
-function returnCardToHand(c) {
-    c.isAnimatingPos = false; // Biarkan update loop mengembalikan posisi via recalcHand
+window.addEventListener('resize', resize);
+canvas.addEventListener('mousedown', onPointerDown);
+canvas.addEventListener('mousemove', onPointerMove);
+window.addEventListener('mouseup', onPointerUp);
+
+canvas.addEventListener('touchstart', onPointerDown, {passive: false});
+canvas.addEventListener('touchmove', onPointerMove, {passive: false});
+window.addEventListener('touchend', onPointerUp);
+
+function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.closePath(); }
+function showFloatingText(txt, x, y, c) { 
+    floatingTexts.push({ text: txt, x: x, y: y, color: c, life: 1, update: function(){this.y-=1.5; this.life-=0.02;}, draw: function(ctx){
+        ctx.globalAlpha=Math.max(0,this.life); ctx.fillStyle=this.color; ctx.strokeStyle='#000'; ctx.lineWidth=3;
+        ctx.font="bold 24px Orbitron"; ctx.strokeText(this.text,this.x,this.y); ctx.fillText(this.text,this.x,this.y); ctx.globalAlpha=1;
+    }});
 }
 
-function playCard(index) {
-    let card = myHand.splice(index, 1)[0];
-    discardPile.push(card);
-    
-    card.moveTo(width/2, height/2, 300);
-    card.scaleX = 1; // Pastikan lurus
-    
-    recalcHand();
-    playSound('play');
-    
-    // Kirim move ke lawan
-    if(conn && conn.open) {
-        conn.send({
-            type: 'OPPONENT_MOVE',
-            card: { suit: card.suit, value: card.value },
-            isCrit: false
-        });
-    }
-    
-    turn = 'opponent';
-    
-    // Efek khusus
-    if (card.suit === 'moon') {
-        spawnExplosion(width/2, height/2, COLORS.moon);
-        if(conn) conn.send({ type: 'MOON_ATTACK', card: {suit:'moon', value:0} });
-    }
-    
-    // Cek Kemenangan
-    if (myHand.length === 0) {
-        endGame("YOU WIN!", "Victory Achieved");
-        // Beritahu lawan kalah (logic ini bisa ditambah di handleNetworkData lawan)
-    }
-}
-
-// Inisialisasi Akhir
 resize();
-initGameSequence();
+loadAssets();
 loop();
 </script>
 </body>
