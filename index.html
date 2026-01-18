@@ -6,227 +6,434 @@
     <title>CATALYST</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Orbitron:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Orbitron:wght@400;700;900&display=swap');
+    body {
+      * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none; /* Mencegah menu konteks saat tekan lama */
+    outline: none;
+}
 
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #050505;
-            font-family: 'Orbitron', sans-serif;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
-            background-image: url('https://github.com/viqihakbarrr-cyber/kkk/blob/main/BG.png?raw=true');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+        margin: 0;
+        overflow: hidden;
+        background-color: #000;
+        font-family: 'Orbitron', sans-serif;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        background-color: #000; 
+        background-size: cover;
+        font-family: 'Orbitron', sans-serif;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-attachment: fixed; /* Agar background diam saat ada elemen bergerak */
+        background-size: cover;       /* Memenuhi layar */
+    
+    }
+
+    #gameCanvas {
+        display: block; width: 100%; height: 100vh; background: transparent; 
+    }
+    /* --- NEW ANIMATIONS --- */
+    
+    /* 1. Transisi Background Smooth */
+    #loading-layer {
+        transition: opacity 1.5s ease-in-out; /* Durasi fade out background hitam */
+    }
+
+    /* 2. Animasi Container Kartu (Drop dari atas) */
+    .drop-in-animation {
+        animation: dropDownBounce 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+/* Animasi Gelombang Cahaya */
+@keyframes shadowPulse {
+    0% {
+        filter: brightness(1) grayscale(0) drop-shadow(0 5px 15px rgba(200, 90, 255, 0.6));
+    }
+    50% {
+        /* Saat di tengah animasi, shadow melebar dan lebih terang */
+        filter: brightness(1.1) grayscale(0) drop-shadow(0 10px 35px rgba(200, 90, 255, 0.9));
+    }
+    100% {
+        filter: brightness(1) grayscale(0) drop-shadow(0 5px 15px rgba(200, 90, 255, 0.6));
+    }
+}
+
+    @keyframes dropDownBounce {
+        0% {
+            transform: translateY(-150vh); /* Mulai dari jauh di atas layar */
+            opacity: 0;
         }
-
-        #gameCanvas {
-            display: block;
-            width: 100%;
-            height: 100vh;
-            background: transparent; 
+        60% {
+            transform: translateY(30px); /* Sedikit membal ke bawah */
+            opacity: 1;
         }
-
-        #ui-layer, #lobby-screen, #loading-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            pointer-events: none;
+        100% {
+            transform: translateY(0); /* Posisi normal */
+            opacity: 1;
         }
-
-        #lobby-screen, #game-over, #fs-toggle {
-            pointer-events: auto;
-        }
-
-        #lobby-screen {
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 200;
-            backdrop-filter: blur(8px);
-        }
-        /* --- LOADING SCREEN BARU --- */
-        #loading-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column;
-            justify-content: flex-end; /* Posisi di bawah */
-            align-items: center;
-            z-index: 300;
-            
-            /* Background Baru */
-            background-image: url('https://github.com/viqihakbarrr-cyber/kkk/blob/main/IceLoadS.jpg?raw=true');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-
-        /* Container untuk bar dan text di bawah */
-        .loading-container {
-            width: 80%;
-            max-width: 600px;
-            margin-bottom: 50px; /* Jarak dari bawah layar */
-            text-align: center;
-        }
-
-        .loading-detail-text {
-            color: #9933FF;
-            font-size: 14px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-            text-shadow: 0 0 5px rgba(0,0,0,0.8);
-            font-family: 'Orbitron', sans-serif;
-            text-transform: uppercase;
-        }
-
-        .progress-bar- {
-            width: 100%;
-            height: 8px;
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid #333;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #7700FF, #CC44FF);
-            box-shadow: 0 0 10px #9933FF;
-            transition: width 0.2s ease-out;
-        }
+    }
 
 
 
-        .modal-box {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px; border-radius: 15px; text-align: center;
-            box-shadow: 0 0 40px rgba(153, 51, 255, 0.3);
-            border: 4px solid #333; max-width: 65%; width: 400px;
-        }
+/* Class khusus untuk kartu yang sedang aktif/di tengah */
+.carousel-item.active img {
+    animation: naturalFloat 3s ease-in-out infinite;
+    
+}
 
-        h1 { margin: 0 0 20px 0; color: #000; font-size: 28px; letter-spacing: 2px; }
-        h2 { margin: 0 0 15px 0; color: #333; font-size: 18px; }
+
+
+
+
+    /* --- UI LAYER UMUM --- */
+    #ui-layer, #loading-layer {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: center;
+        pointer-events: none;
+    }
+    
+    #lobby-screen {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: center;
+        z-index: 200;
+        pointer-events: auto;
         
-        .input-group { margin-bottom: 20px; }
-        input[type="number"] {
-            padding: 10px; font-family: 'Orbitron'; font-size: 24px; text-align: center;
-            border: 2px solid #333; border-radius: 10px; width: 150px; outline: none;
-        }
-        input[type="number"]:focus { border-color: #9933FF; }
+        /* BACKGROUND LOBBY */
+        background-image: url('https://github.com/viqihakbarrr-cyber/CATALYST/blob/main/BgLobby.jpg?raw=true');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
 
-        .room-code-display {
-            font-size: 36px; font-weight: bold; color: #9933FF; margin: 20px 0; letter-spacing: 5px;
-        }
+    /* --- CAROUSEL MODE SELECTOR & MATCHMAKING UI --- */
+    .carousel-container {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        perspective: 1000px;
+    }
 
-        button.main-btn {
-            padding: 15px 30px; background: #000; border: none; color: white;
-            font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: bold;
-            cursor: pointer; border-radius: 50px; transition: all 0.2s;
-            margin: 10px; min-width: 150px;
-        }
-        button.main-btn:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(153, 51, 255, 0.5); }
-        button.main-btn.active { background: linear-gradient(45deg, #7700FF, #CC44FF); }
-        .btn-secondary { background: #555 !important; }
+    .carousel-track {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: max-content; 
+        cursor: grab;
+    }
+    
+    .carousel-track:active {
+        cursor: grabbing;
+    }
 
-        #game-over {
-            display: none; background: rgba(255, 255, 255, 0.95);
-            padding: 40px; border-radius: 20px; text-align: center; border: 3px solid #333;
-            pointer-events: auto; box-shadow: 0 0 50px rgba(255, 255, 255, 0.5);
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        }
-
-        #fs-toggle {
-            position: absolute;
-            top: 20px; right: 20px;
-            width: 44px; height: 44px;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 12px;
-            cursor: pointer;
-            z-index: 1000;
-            display: flex; justify-content: center; align-items: center;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(4px);
-        }
-        #fs-toggle:hover { background: rgba(153, 51, 255, 0.8); border-color: #fff; transform: scale(1.1); }
+     /* --- MODE CARD STYLE BARU (UPDATED) --- */
+    .mode-card {
+        width: 250px; 
+        height: 400px; 
+        margin: 0 10px; /* Total lebar = 250 + 20 = 270px */
+        background-color: transparent !important; 
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        border: none !important;
+        border-radius: 15px;
+        box-shadow: none !important; 
+        position: relative;
         
-        #fs-icon svg {
-            width: 24px; height: 24px; fill: white;
-            filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
-        }
-
-        .hidden { display: none !important; }
+        /* Default state: Gelap, kecil, datar */
+        transform: scale(0.85) perspective(1000px) rotateX(0deg);
+        filter: brightness(0.5) grayscale(0.5); 
+        opacity: 1;
         
-        .rematch-status {
-            font-size: 14px; color: #666; margin-top: 10px; font-weight: bold;
-        }
+        transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                    filter 0.6s ease,
+                    opacity 0.6s ease;
+        z-index: 1;
+        
+        
 
+        transform: perspective(600px) rotateX(0deg) scale(0.85);
+        
+        /* State awal: bayangan tipis/hitam biasa */
+        filter: brightness(0.5) grayscale(0.5) drop-shadow(0 0 0px rgba(0,0,0,0));
+        
+        transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                    filter 0.6s ease,
+                    opacity 0.6s ease;
+    }
+
+        
+        
+    .mode-card.active {
+    transform: perspective(600px) rotateX(25deg) scale(1.1) translateY(-10px) !important;
+    z-index: 10;
+    box-shadow: none !important;
+    border: none !important;
+
+    /* MEMANGGIL ANIMASI */
+    /* duration 3s, linear, berulang selamanya (infinite) */
+    animation: shadowPulse 3s infinite ease-in-out;
+}
+
+    .mode-card.faded-out {
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(0.5) translateY(100px); /* Turun ke bawah saat hilang */
+    }
+
+
+    /* Layer Gelap untuk Background */
+    .mode-card::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0);
+        transition: background 0.5s ease;
+        border-radius: 15px;
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    .mode-card.active {
+        transform: scale(1.05); 
+        filter: brightness(1); 
+        z-index: 10;
+    }
+
+    /* --- TAHAP ANIMASI SEARCHING --- */
+    /* Tahap 1: Rotasi */
+    .mode-card.anim-rotate {
+        transform: scale(1.05) rotate(180deg) !important;
+        z-index: 100 !important;
+    }
+
+    /* Tahap 2: Pindah ke Atas & Gelap */
+    .mode-card.anim-searching {
+        transform: translateY(-85vh) rotate(180deg) scale(2) !important; 
+        z-index: 100 !important;
+        filter: brightness(1) !important; 
+    }
+
+    .mode-card.anim-searching::after {
+        background: rgba(0, 0, 0, 0.0);
+        
+    }
+
+    /* --- OVERLAY TEXT & BUTTON --- */
+    .search-overlay {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; flex-direction: column;
+        justify-content: flex-end; 
+        align-items: center;
+        padding-bottom: 40px;
+        
+        opacity: 0; 
+        pointer-events: none;
+        transition: opacity 0.5s ease;
+        z-index: 5;
+        transform: rotate(180deg); /* Teks dibalik agar terbaca saat kartu terbalik */
+    }
+
+    .mode-card.anim-searching .search-overlay {
+        opacity: 1; 
+        pointer-events: auto;
+    }
+
+  /* --- UI MATCHMAKING TERPISAH (BARU) --- */
+#matchmaking-ui {
+    position: absolute;
+    top: 2%; /* Posisi tetap di bagian atas layar */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 500; /* Lebih tinggi dari kartu */
+    pointer-events: auto;
+    transition: opacity 0.5s ease;
+}
+
+#matchmaking-ui.hidden {
+    display: none;
+    opacity: 0;
+}
+
+/* Style Text & Button (Diambil dari yang lama tapi disederhanakan) */
+.searching-label {
+    font-size: 14px; /* Sedikit diperbesar agar jelas */
+    color: #00FF00; 
+    letter-spacing: 3px;
+    margin-bottom: 5px; 
+    text-transform: uppercase;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    animation: pulseText 1.5s infinite;
+}
+
+.timer-text {
+    font-size: 24px; /* Diperbesar */
+    color: #fff; 
+    font-weight: 900;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+    margin-bottom: 20px;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.cancel-btn {
+    width: 20px; height: 20px; /* Diperbesar agar mudah ditekan */
+    border: 1.4px solid #ffff;
+    color: #ffff;
+    border-radius: 50%;
+    font-weight: bold; 
+    cursor: pointer;
+    display: flex; justify-content: center; align-items: center;
+    background: rgba(0,0,0,0.2);
+    transition: all 0.2s;
+    font-size: 11px;
+    margin-left: 170px;
+    margin-top: -30px;
+    
+    /* Animasi muncul tombol cancel */
+    opacity: 0; 
+    pointer-events: none;
+    transition: opacity 0.5s ease 2s; /* Delay 2 detik baru muncul */
+}
+
+
+/* Class active untuk memunculkan tombol cancel */
+#matchmaking-ui.active-cancel .cancel-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.cancel-btn:hover {
+    background: #aaa;
+    color: white;
+    box-shadow: 0 0 15px #aaaa;
+}
+    
+    @keyframes pulseText {
+        0% { opacity: 0.5; }
+        50% { opacity: 1; }
+        100% { opacity: 0.5; }
+    }
+    /* --- LOADING SCREEN UPDATE --- */
+    #loading-layer {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; flex-direction: column;
+        justify-content: flex-end; 
+        align-items: center;
+        z-index: 9999; /* Pastikan di paling atas */
+        background-color: #000000; /* Background Hitam Sesuai Request */
+        
+        /* Splash.png Responsif & Selalu di dalam Frame */
+        background-image: url('https://github.com/viqihakbarrr-cyber/kkk/blob/main/Splash.png?raw=true');
+        background-size: contain; 
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+
+    /* Sembunyikan canvas saat masih loading agar background game tidak bocor */
+    #gameCanvas {
+        display: none; /* Akan diubah ke block via JS jika game dimulai */
+        width: 100%; height: 100vh; background: transparent; 
+    }
+
+    .loading-container { width: 80%; max-width: 600px; margin-bottom: 50px; text-align: center; }
+    .loading-detail-text { color: #ffff; font-size: 14px; font-weight: bold; margin-bottom: 10px; text-shadow: 0 0 5px black; }
+    .progress-bar-bg { width: 100%; height: 8px; background: rgba(0,0,0,0.7); border: 1px solid #333; border-radius: 10px; overflow:hidden; }
+    .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #ffff, #ffff); transition: width 0.2s; }
+
+    #game-over {
+        display: none; background: rgba(255, 255, 255, 0.95);
+        padding: 40px; border-radius: 20px; text-align: center; border: 3px solid #333;
+        pointer-events: auto; box-shadow: 0 0 50px rgba(255, 255, 255, 0.5);
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    }
+    .main-btn { padding: 15px 30px; background: #000; color: white; border: none; border-radius: 50px; font-family: 'Orbitron'; cursor: pointer; }
+    .btn-secondary { background: #555 !important; }
+    
+    /* Utility class hidden */
+    .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
     <canvas id="gameCanvas"></canvas>
 
-    <div id="fs-toggle" onclick="toggleFullscreen()">
-        <div id="fs-icon">
-            <svg viewBox="0 0 24 24">
+    <div id="fs-toggle" onclick="toggleFullscreen()" style="position: absolute; top: 10px; right: 10px; z-index: 500; cursor: pointer;">
+        <div id="fs-icon" style="width: 30px; height: 30px; background: rgba(255,255,255,0.2); border-radius: 5px; display: flex; align-items: center; justify-content: center;">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: white;">
                 <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
             </svg>
         </div>
     </div>
 
-        <div id="loading-layer">
+    <div id="loading-layer">
         <div class="loading-container">
             <div class="loading-detail-text" id="loading-text-detail">INITIALIZING SYSTEM... 0%</div>
-            
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" id="loading-bar-fill"></div>
             </div>
         </div>
     </div>
+<div id="lobby-screen" class="hidden">
+    
+    <div id="matchmaking-ui" class="hidden">
+        <div class="searching-label" id="mm-label">FINDING MATCH</div>
+        <div class="timer-text" id="mm-timer">00:00</div>
+        <div class="cancel-btn" onclick="cancelMatchmaking(event)">X</div>
+    </div>
+    <div class="carousel-container" id="carousel-container">
+        <div class="carousel-track" id="track">
+            
+            <div class="mode-card" id="card-ranked" 
+                 style="background-image: url('https://github.com/viqihakbarrr-cyber/CATALYST/blob/main/Mclassic.png?raw=true');">
+                 </div>
 
+            <div class="mode-card active" id="card-classic" 
+                 style="background-image: url('https://github.com/viqihakbarrr-cyber/CATALYST/blob/main/Mclassic.png?raw=true');">
+                 </div>
 
-    <div id="lobby-screen" class="hidden">
-        <div class="modal-box" id="lobby-main">
-            <h1>CATALYST</h1>
-            <p style="color:#666; margin-bottom:20px;">CARD GAME</p>
-            <button class="main-btn active" onclick="startMatchmaking()">FIND MATCH</button>
-            <br>
-            <p style="font-size: 12px; color: #999; margin-top: 15px;">Broker: <span id="broker-status">Checking...</span></p>
-        </div>
-        <div class="modal-box hidden" id="lobby-searching">
-            <h2>SEARCHING...</h2>
-            <div class="spinner"></div>
-            <p id="search-status">Connecting to matchmaking server...</p>
-            <p id="queue-position" style="font-size: 14px; color: #666;"></p>
-            <br>
-            <button class="main-btn btn-secondary" onclick="cancelMatchmaking()">CANCEL</button>
-        </div>
-        <div class="modal-box hidden" id="lobby-connecting">
-            <h2>MATCH FOUND!</h2>
-            <div class="spinner"></div>
-            <p id="connecting-status">Establishing P2P connection...</p>
-            <br>
-            <button class="main-btn btn-secondary" onclick="cancelMatchmaking()">CANCEL</button>
+            <div class="mode-card" id="card-friend" 
+                 style="background-image: url('https://github.com/viqihakbarrr-cyber/CATALYST/blob/main/Mclassic.png?raw=true');">
+                 </div>
+
         </div>
     </div>
+    
+    <div id="search-status" style="position:absolute; bottom:20px; color:rgba(255,255,255,0.5); font-size:10px;"></div>
+    <div id="queue-position" style="position:absolute; bottom:5px; color:rgba(255,255,255,0.5); font-size:10px;"></div>
+    <div id="connecting-status" style="position:absolute; top:80px; color:#00FF00; font-size:12px;"></div>
+</div>
+
 
     <div id="ui-layer">
         <div id="game-over">
             <h1 id="winner-text">YOU WIN!</h1>
             <p id="sub-winner-text" style="color:#666; margin-bottom:20px;">Opponent Disconnected</p>
             <button id="btn-rematch" class="main-btn active" onclick="requestRematch()">REMATCH</button>
-            <br>
+            <br><br>
             <div id="rematch-msg" class="rematch-status hidden">Waiting for opponent...</div>
             <button class="main-btn btn-secondary" onclick="location.reload()">MAIN MENU</button>
         </div>
     </div>
 
 <script>
+  let isCooldown = false; // Status apakah sedang dalam masa tunggu
+let cooldownTime = 3;   // Durasi detik
+
 // --- AUDIO MANAGEMENT ---
 const SFX_URL = 'https://cdn.jsdelivr.net/gh/viqihakbarrr-cyber/kkk@main/sfxnbs.ogg';
 const SFX_SPRITES = {
@@ -235,12 +442,13 @@ const SFX_SPRITES = {
     play:   { start: 3,  dur: 1 },
     error:  { start: 6,  dur: 1 },
     crit:   { start: 9,  dur: 4 },
-    parry:  { start: 14, dur: 3 }
+    parry:  { start: 14, dur: 3 },
+    purple: { start: 15, dur: 7 }
 };
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let sfxBuffer = null;
-let bgmNode = null; // Variabel baru untuk BGM
+let bgmNode = null;
 let bgmGainNode = null;
 
 async function loadAudioBuffer() {
@@ -258,7 +466,6 @@ async function loadAudioBuffer() {
     }
 }
 
-
 function playSound(type) {
     if (!sfxBuffer) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -272,7 +479,6 @@ function playSound(type) {
     }
 }
 
-// === TAMBAHKAN FUNGSI INI UNTUK BGM ===
 function startBGM() {
     if (!sfxBuffer || bgmNode) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -286,7 +492,7 @@ function startBGM() {
         bgmNode.loopEnd = 173; 
 
         bgmGainNode = audioCtx.createGain();
-        bgmGainNode.gain.value = 1.0; // Volume 100%
+        bgmGainNode.gain.value = 1.0; 
 
         bgmNode.connect(bgmGainNode);
         bgmGainNode.connect(audioCtx.destination);
@@ -298,12 +504,112 @@ function startBGM() {
     }
 }
 
-// --- ASSET MANAGEMENT ---
+// --- CAROUSEL LOGIC ---
+const track = document.getElementById('track');
+const cards = document.querySelectorAll('.mode-card');
+const container = document.getElementById('carousel-container');
+
+let currentCardIdx = 1; // Start at Classic
+const cardWidth = 270; 
+let isDraggingLobby = false;
+let startPos = 0;
+let currentTranslate = 0;
+let prevTranslate = 0;
+let animationID;
+
+function setPositionByIndex() {
+    currentTranslate = (1 - currentCardIdx) * cardWidth;
+    prevTranslate = currentTranslate;
+    setSliderPosition();
+    updateVisuals();
+}
+
+function setSliderPosition() {
+    track.style.transform = `translateX(${currentTranslate}px)`;
+}
+
+function updateVisuals() {
+    cards.forEach((card, index) => {
+        card.classList.remove('active');
+        if (index === currentCardIdx) {
+            card.classList.add('active');
+        }
+    });
+}
+
+function animation() {
+    setSliderPosition();
+    if (isDraggingLobby) requestAnimationFrame(animation);
+}
+
+// --- EVENT LISTENERS (TOUCH & MOUSE) ---
+container.addEventListener('touchstart', touchStart);
+container.addEventListener('touchend', touchEnd);
+container.addEventListener('touchmove', touchMove);
+
+container.addEventListener('mousedown', touchStart);
+container.addEventListener('mouseup', touchEnd);
+container.addEventListener('mouseleave', () => { if(isDraggingLobby) touchEnd() });
+container.addEventListener('mousemove', touchMove);
+
+function touchStart(event) {
+    if(isSearching) return; 
+    isDraggingLobby = true;
+    startPos = getPositionX(event);
+    animationID = requestAnimationFrame(animation);
+    track.style.transition = 'none'; 
+}
+
+function touchMove(event) {
+    if (isDraggingLobby) {
+        const currentPosition = getPositionX(event);
+        const diff = currentPosition - startPos;
+        currentTranslate = prevTranslate + diff;
+    }
+}
+
+function touchEnd() {
+    isDraggingLobby = false;
+    cancelAnimationFrame(animationID);
+    
+    const movedBy = currentTranslate - prevTranslate;
+    
+    if (movedBy < -80 && currentCardIdx < cards.length - 1) currentCardIdx += 1;
+    else if (movedBy > 80 && currentCardIdx > 0) currentCardIdx -= 1;
+    
+    track.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+    setPositionByIndex();
+}
+
+function getPositionX(event) {
+    return event.type.includes('mouse') ? event.pageX : event.touches[0].clientX;
+}
+
+// Click Logic
+cards.forEach((card, index) => {
+    card.addEventListener('click', () => {
+        if(isSearching) return;
+
+        if (index === currentCardIdx) {
+            console.log("Start Matchmaking for mode index: " + index);
+            startMatchmakingUI(index);
+        } else {
+            currentCardIdx = index;
+            track.style.transition = 'transform 0.3s ease-out';
+            setPositionByIndex();
+        }
+    });
+});
+
+setPositionByIndex();
+// REPLACE bagian ASSETS_URL dengan ini:
 const ASSETS_URL = {
     fire: 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/BCfire.png?raw=true',
     water: 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/BCwater.png?raw=true',
     leaf: 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/BCleaf.png?raw=true',
     mirror: 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/SCmiror.png?raw=true',
+    purple: 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/SCpurple.png?raw=true', // NEW
+    blind: 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/FXblind.png?raw=true',   // NEW
     back: 'https://github.com/viqihakbarrr-cyber/kkk/blob/main/Back.png?raw=true'
 };
 
@@ -311,60 +617,365 @@ const IMAGES = {};
 let assetsLoaded = false;
 
 function loadAssets() {
-    let loadedCount = 0;
     const imgKeys = Object.keys(ASSETS_URL);
-    const total = imgKeys.length + 1; // +1 untuk Audio
+    const totalAssets = imgKeys.length + 1; // +1 untuk Audio
+    let loadedCount = 0;
     
     const barFill = document.getElementById('loading-bar-fill');
     const textDetail = document.getElementById('loading-text-detail');
 
-    function updateProgress(itemName) {
+    function updateLoadingUI(itemName) {
         loadedCount++;
-        const percent = Math.round((loadedCount / total) * 100);
+        const percent = Math.floor((loadedCount / totalAssets) * 100);
         
         if(barFill) barFill.style.width = `${percent}%`;
-        if(textDetail) textDetail.innerText = `LOADING ${itemName || 'DATA'}... (${percent}%)`;
-
-        if(loadedCount >= total) {
-            assetsLoaded = true;
-            setTimeout(() => {
-                document.getElementById('loading-layer').classList.add('hidden');
-                document.getElementById('lobby-screen').classList.remove('hidden');
-                checkBrokerConnection();
-            }, 800);
+        if(textDetail) textDetail.innerText = `SYSTEM LOAD... ${itemName} (${percent}%)`;
+        
+        if (loadedCount >= totalAssets) {
+            // Beri jeda sedikit saat 100% sebelum masuk lobby
+            setTimeout(onAllAssetsLoaded, 800);
         }
     }
 
+    // Load Gambar
     imgKeys.forEach(key => {
         const img = new Image();
         img.src = ASSETS_URL[key];
-        img.onload = () => updateProgress(key.toUpperCase());
-        img.onerror = () => { console.warn("Failed asset:", key); updateProgress(key.toUpperCase()); };
-        IMAGES[key] = img;
+        img.onload = () => { IMAGES[key] = img; updateLoadingUI(key.toUpperCase()); };
+        img.onerror = () => { IMAGES[key] = null; updateLoadingUI(key.toUpperCase() + " (SKIP)"); };
     });
 
-    loadAudioBuffer().then(() => updateProgress("AUDIO SYSTEM"));
+    // Load Audio
+    loadAudioBuffer().then(() => {
+        updateLoadingUI("AUDIO CORE");
+    });
 }
 
 
-// --- KONFIGURASI NETWORK ---
+// Fungsi untuk mematikan efek blind dan merapikan kartu
+function endBlindMode() {
+    isBlinded = false;
+    blindTurnsLeft = 0;
+    
+    // Kembalikan timeScale ke normal
+    timeScale = 1.0; 
+    
+    // Rapikan kembali kartu di tangan (Animasi balik ke posisi rapi)
+    arrangeHand(); 
+    
+    // Reset rotasi visual kartu agar lurus kembali
+    myHand.forEach(c => {
+        c.angle = 0;
+        c.vx = 0;
+        c.vy = 0;
+        c.rotSpeed = 0;
+    });
+    
+    showFloatingText("VISION RESTORED!", width/2, height/2, "#FFF");
+    playSound('deal'); // Sound effect pemulihan
+}
+
+// --- FUNGSI TRANSISI BARU (Sesuai Request) ---
+function onAllAssetsLoaded() {
+  assetsLoaded = true;
+    console.log("All assets loaded. Starting transitions...");
+    
+ // document.body.style.backgroundImage = "url('https://github.com/viqihakbarrr-cyber/kkk/blob/main/BG.png?raw=true')";
+    
+    // 1. Ambil elemen
+    const loadingLayer = document.getElementById('loading-layer');
+    const lobbyScreen = document.getElementById('lobby-screen');
+    const carousel = document.getElementById('carousel-container');
+
+    // 2. Tampilkan Lobby (di belakang loading layer yang masih hitam)
+    if(lobbyScreen) {
+        lobbyScreen.classList.remove('hidden');
+        if(typeof setPositionByIndex === 'function') setPositionByIndex();
+    }
+
+    // 3. Fade Out Loading Layer (Splash + Hitam)
+    // Ini akan menciptakan efek "Mix Smooth" karena Lobby Screen sudah ada di bawahnya
+    if(loadingLayer) {
+        loadingLayer.style.opacity = "0"; 
+        
+        // Hapus elemen loading dari DOM/Layout setelah transisi opacity selesai
+        setTimeout(() => {
+            loadingLayer.classList.add('hidden');
+        }, 1500); // Sesuai durasi CSS transition (1.5s)
+    }
+
+    // 4. Jalankan Animasi Kartu Turun dari Atas
+    if(carousel) {
+        // Reset posisi dulu untuk jaga-jaga
+        carousel.style.opacity = "0"; 
+        
+        // Tambahkan class animasi CSS yang sudah kita buat
+        // Delay sedikit (200ms) agar barengan dengan fade out background
+        setTimeout(() => {
+            carousel.classList.add('drop-in-animation');
+            // Pastikan opacity jadi 1 karena dikontrol keyframes
+            carousel.style.opacity = "1"; 
+        }, 200);
+    }
+}
+// --- MATCHMAKING ANIMATION LOGIC ---
+let searchTimerInterval = null;
+let searchSeconds = 0;
+let animTimeout1, animTimeout2; 
+let lastSearchStartTime = 0; // Tambahkan variabel global ini
+
+
+function startMatchmakingUI(modeIndex) {
+    // 1. Cek Cooldown
+    if (isCooldown) {
+        showLobbyToast("Try again in a few seconds");
+        return; 
+    }
+
+    if (isSearching) return;
+    lastSearchStartTime = Date.now(); 
+
+    startBGM(); 
+    isSearching = true;
+    
+    // Matikan interaksi geser kartu
+    document.getElementById('track').style.pointerEvents = 'none';
+    
+    // --- UPDATE: Sembunyikan kartu yang tidak dipilih ---
+    cards.forEach((card, index) => {
+        if (index !== modeIndex) {
+            card.classList.add('faded-out'); // Hilangkan kartu lain
+        }
+    });
+
+    const activeCard = cards[modeIndex];
+    
+    // --- ANIMASI KARTU ---
+    // Step 1: Kartu Berputar (Hapus efek tilt 3D dulu biar putarannya bagus)
+    activeCard.style.transform = "scale(1.05) rotate(0deg)"; // Reset tilt manual sebelum putar
+    setTimeout(() => {
+        activeCard.classList.add('anim-rotate');
+        playSound('play');
+    }, 50);
+
+    // Step 2: Kartu Terbang ke Atas (Gelap)
+    animTimeout1 = setTimeout(() => {
+        activeCard.classList.add('anim-searching');
+    }, 600);
+
+    // --- ANIMASI UI MATCHMAKING ---
+    animTimeout2 = setTimeout(() => {
+        const uiContainer = document.getElementById('matchmaking-ui');
+        const label = document.getElementById('mm-label');
+        
+        uiContainer.classList.remove('hidden');
+        uiContainer.classList.remove('active-cancel');
+        
+        if(modeIndex === 0) label.innerText = "SEARCHING RANKED...";
+        else if(modeIndex === 2) label.innerText = "CONNECTING FRIEND...";
+        else label.innerText = "FINDING MATCH";
+        
+        searchSeconds = 0;
+        updateTimerDisplay(searchSeconds);
+        
+        if(searchTimerInterval) clearInterval(searchTimerInterval);
+        searchTimerInterval = setInterval(() => {
+            searchSeconds++;
+            updateTimerDisplay(searchSeconds);
+        }, 1000);
+
+        uiContainer.classList.add('active-cancel');
+
+        initializeSocketLogic(); 
+    }, 1200);
+}
+
+
+
+function initializeSocketLogic() {
+    if (typeof io === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+        script.onload = () => initializeSocket(); 
+        script.onerror = () => {
+             cancelMatchmaking();
+             showFloatingText("CONNECTION FAILED", width/2, height/2, "red");
+        };
+        document.head.appendChild(script);
+    } else {
+        initializeSocket();
+    }
+}
+
+function checkWinCondition() {
+    // 1. Cek apakah game sedang berjalan
+    if (gameState !== 'PLAYING') return;
+    
+    // 2. Cek apakah kartu sudah pernah dibagikan (PENTING AGAR TIDAK WIN DI AWAL)
+    if (!cardsDealt) return; 
+
+    // 3. Logika Menang (Kartu kita habis)
+    if (myHand.length === 0) {
+        if (conn && conn.open) conn.send({ type: 'GAME_OVER_SYNC', winner: 'opponent' });
+        endGame("YOU WIN!", "Victory Achieved", true);
+    } 
+    // 4. Logika Kalah (Kartu lawan habis)
+    else if (opponentHand.length === 0) {
+        endGame("GAME OVER", "Opponent finished their cards", false);
+    }
+}
+
+
+
+function cancelMatchmaking(e) {
+    if(e) e.stopPropagation();
+
+    // Proteksi 3 detik
+    const currentTime = Date.now();
+    if (currentTime - lastSearchStartTime < 3000) return; 
+
+    // Cooldown Logic
+    isCooldown = true;
+    cooldownTime = 3; 
+    const cdInterval = setInterval(() => {
+        cooldownTime--;
+        if (cooldownTime <= 0) {
+            clearInterval(cdInterval);
+            isCooldown = false;
+        }
+    }, 1000);
+
+    // --- SEMBUNYIKAN UI MATCHMAKING ---
+    const uiContainer = document.getElementById('matchmaking-ui');
+    if(uiContainer) {
+        uiContainer.classList.remove('active-cancel'); // Hilangkan tombol dulu
+        uiContainer.classList.add('hidden'); // Hilangkan container
+    }
+
+    // --- KEMBALIKAN ANIMASI KARTU ---
+    const activeCard = document.querySelector('.mode-card.anim-rotate');
+    if(activeCard) {
+        activeCard.classList.remove('anim-searching'); // Turun
+        setTimeout(() => {
+            activeCard.classList.remove('anim-rotate'); // Balik putaran
+            resetLobbyState(); 
+        }, 600);
+    } else {
+        resetLobbyState();
+    }
+}
+
+function resetLobbyState() {
+
+    document.body.style.backgroundImage = "none";
+    document.body.style.backgroundColor = "#000"
+  
+    if (socket) { socket.disconnect(); socket = null; }
+    if (peer) { peer.destroy(); peer = null; }
+    conn = null;
+    isSearching = false;
+    isHost = false;
+    
+    // Bersihkan interval
+    if(searchTimerInterval) { clearInterval(searchTimerInterval); searchTimerInterval = null; }
+
+    const track = document.getElementById('track');
+    if(track) track.style.pointerEvents = 'auto';
+
+    // --- UPDATE: Reset semua kartu (hapus animasi & tampilkan sibling) ---
+    cards.forEach(c => {
+        c.classList.remove('anim-searching');
+        c.classList.remove('anim-rotate');
+        c.classList.remove('faded-out'); // Munculkan kembali kartu lain
+        c.style.transform = ""; // Hapus inline style transform agar kembali ke CSS class
+    });
+    
+    // Pastikan UI Matchmaking hilang
+    document.getElementById('matchmaking-ui').classList.add('hidden');
+    
+    document.getElementById('lobby-screen').classList.remove('hidden');
+    document.getElementById('loading-layer').classList.add('hidden'); 
+    
+    // Panggil ulang posisi visual agar kartu active kembali ke efek 3D
+    updateVisuals(); 
+
+    if (matchmakingTimeout) { clearTimeout(matchmakingTimeout); matchmakingTimeout = null; }
+}
+
+
+let resetLobby = resetLobbyState; 
+
+function updateTimerDisplay(seconds) {
+    const min = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const sec = (seconds % 60).toString().padStart(2, '0');
+    
+    // Target ke elemen global baru
+    const el = document.getElementById('mm-timer');
+    if(el) el.innerText = `${min}:${sec}`;
+}
+
+function showConnectingUI() {
+    // Ubah text label global
+    const label = document.getElementById('mm-label');
+    if(label) {
+        label.innerText = "OPPONENT FOUND!";
+        label.style.color = "#00FF00";
+    }
+    
+    if(searchTimerInterval) clearInterval(searchTimerInterval);
+}
+
+// Fungsi khusus untuk menampilkan pesan di atas Lobby
+function showLobbyToast(text) {
+    const el = document.createElement('div');
+    el.innerText = text;
+    
+    // Style agar terlihat di tengah layar & di atas Lobby
+    el.style.position = 'absolute';
+    el.style.top = '50%';
+    el.style.left = '50%';
+    el.style.transform = 'translate(-50%, -50%)';
+    el.style.color = '#FF4444'; // Merah terang
+    el.style.fontFamily = "'Orbitron', sans-serif";
+    el.style.fontSize = '11px';
+    el.style.fontWeight = 'bold';
+    el.style.textShadow = '0 0 10px #000, 0 0 20px #FF0000'; // Efek glow
+    el.style.zIndex = '9999'; // Pastikan paling atas
+    el.style.pointerEvents = 'none'; // Agar tidak mengganggu klik
+    el.style.opacity = '1';
+    el.style.transition = 'all 1s ease-out';
+
+    document.body.appendChild(el);
+
+    // Animasi menghilang (Fade out & Float up)
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            el.style.opacity = '0';
+            el.style.top = '40%'; // Gerak sedikit ke atas
+        }, 100);
+    });
+
+    // Hapus elemen setelah animasi selesai
+    setTimeout(() => {
+        if (el.parentNode) el.parentNode.removeChild(el);
+    }, 1100);
+}
+
+// --- GAME VARIABLES & SOCKET ---
 let peer = null;
 let conn = null;
 let myPeerID = null;
 let isHost = false;
 let rematchMe = false;
 let rematchOpp = false;
-let canParry = false; // ADDED: track whether player can parry incoming critical attacks
-let parryActive = false; // NEW: flag to prevent late-spawn projectiles after a successful parry
+let canParry = false; 
+let parryActive = false; 
 
-
-// Matchmaking Configuration
-const BROKER_URL = "https://beagle-causal-gorilla.ngrok-free.app"; // Change this to your deployed broker URL
+const BROKER_URL = "https://beagle-causal-gorilla.ngrok-free.app"; 
 let socket = null;
 let isSearching = false;
 let matchmakingTimeout = null;
 
-// --- KONFIGURASI CANVAS & GAME ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -380,7 +991,7 @@ let cardH = 160;
 
 const SUITS = ['fire', 'water', 'leaf', 'mirror'];
 const BASIC_SUITS = ['fire', 'water', 'leaf'];
-const COLORS = { fire: '#FF2222', water: '#0088FF', leaf: '#00CC44', mirror: '#00FFFF' };
+const COLORS = { fire: '#FF2222', water: '#0088FF', leaf: '#00CC44', mirror: '#00FFFF', purple: '#800080' };
 const COUNTER_MAP = { fire: 'leaf', leaf: 'water', water: 'fire' };
 
 let deck = [];
@@ -390,13 +1001,17 @@ let opponentHand = [];
 let turn = ''; 
 let gameState = 'MENU'; 
 let isAnimating = false; 
-
+let isBlinded = false;    
+let blindTurnsLeft = 0
 let selectedIdx = -1;
 let dragIdx = -1;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
+let cardsDealt = false; // Penanda apakah kartu sudah dibagikan
+let timeScale = 1.0
+let slowMoActive = false; // Add this with other globals
 
-// Fullscreen Logic
+
 document.addEventListener('fullscreenchange', () => {
     const btn = document.getElementById('fs-toggle');
     btn.style.display = document.fullscreenElement ? 'none' : 'flex'; 
@@ -407,10 +1022,13 @@ function toggleFullscreen() {
     }
 }
 
+
+
+
+
 function easeInOutCubic(x) {
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 }
-
 class Card {
     constructor(suit, value, isMine = true) {
         this.suit = suit; this.value = value;
@@ -432,20 +1050,46 @@ class Card {
         this.isFaceUp = isMine; 
         this.scaleX = 1;      
         this.flipping = false;
+        
+        // --- PHYSICS UNTUK BLIND MODE (ZERO GRAVITY) ---
+        this.angle = 0; 
+        this.initPhysics(); // Panggil fungsi inisialisasi
     }
 
-    moveTo(tx, ty, duration) {
-        this.startX = this.x; this.startY = this.y;
-        this.targetX = tx; this.targetY = ty;
-        this.animDuration = duration;
-        this.animStartTime = performance.now();
-        this.isAnimatingPos = true;
+    // Fungsi helper untuk mereset fisika (dipanggil saat kartu baru ditarik)
+    initPhysics() {
+        this.vx = (Math.random() - 0.5) * 5; // Kecepatan X
+        this.vy = (Math.random() - 0.5) * 5; // Kecepatan Y
+        this.rotSpeed = (Math.random() - 0.5) * 0.15; // Kecepatan Putar
     }
 
-    draw(ctx, forceFaceUp, x, y, w, h) {
+    // Method Zero Gravity
+    updateFloating(boundsY) {
+        // JIKA KARTU SEDANG DI-HOLD/DRAG: BERHENTI BERGERAK
+        if (this.isDragging || this.isAnimatingPos) {
+            this.angle = 0; // Luruskan kartu saat ditangkap
+            return;
+        }
+
+        // Update Posisi
+        this.x += this.vx;
+        this.y += this.vy;
+        this.angle += this.rotSpeed;
+
+        // Pantulan Dinding Kiri & Kanan
+        if (this.x < 50) { this.x = 50; this.vx *= -1; }
+        if (this.x > width - 50) { this.x = width - 50; this.vx *= -1; }
+
+        // Pantulan Atas (Batas area tangan) & Bawah Layar
+        if (this.y < boundsY) { this.y = boundsY; this.vy *= -1; }
+        if (this.y > height - 60) { this.y = height - 60; this.vy *= -1; }
+    }
+
+        draw(ctx, forceFaceUp, x, y, w, h) {
         let drawW = w || cardW;
         let drawH = h || cardH;
 
+        // Logic Posisi (Animasi Drag / Floating)
         if (this.isDragging) {
             this.x = x; this.y = y;
             this.isAnimatingPos = false; 
@@ -458,14 +1102,19 @@ class Card {
             this.y = this.startY + (this.targetY - this.startY) * ease;
             if (progress >= 1) this.isAnimatingPos = false;
         } else {
-            this.x += (this.targetX - this.x) * 0.15;
-            this.y += (this.targetY - this.y) * 0.15;
+            // Jika TIDAK Blind, atau kartu bukan milik kita, gunakan posisi target (rapi)
+            if (!isBlinded || !this.isMine || forceFaceUp !== undefined) { 
+                this.x += (this.targetX - this.x) * 0.15;
+                this.y += (this.targetY - this.y) * 0.15;
+                // Paksa sudut jadi 0 jika blind mode sudah mati
+                if (!isBlinded) this.angle = 0; 
+            }
         }
 
+        // Logic Flip (Membalik Kartu)
         if (this.isMine && !this.isFaceUp && !this.flipping && Math.abs(this.x - this.targetX) < 10) {
             this.startFlip();
         }
-
         if (this.flipping) {
             if (!this.isFaceUp) {
                 this.scaleX -= 0.15;
@@ -480,31 +1129,50 @@ class Card {
 
         ctx.save();
         ctx.translate(this.x + offsetX, this.y);
+        
+        // Rotasi visual hanya jika Blind Mode AKTIF dan kartu di tangan
+        if(isBlinded && this.isMine && !forceFaceUp && !this.isDragging) {
+            ctx.rotate(this.angle);
+        }
 
         let s = 1.0;
         if(this.isSelected) s = 1.1;
         if(this.isDragging) s = 1.15;
-        
         ctx.scale(s * this.scaleX, s);
 
+        // --- PENENTUAN GAMBAR KARTU ---
         let showFace = (forceFaceUp !== undefined) ? forceFaceUp : this.isFaceUp;
 
         if (showFace) {
-            if (this.suit === 'mirror') {
-                ctx.shadowColor = COLORS.mirror; ctx.shadowBlur = 20;
-            } else {
-                ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = (this.isSelected || this.isDragging) ? 25 : 5;
+            let assetKey = this.suit;
+
+            // LOGIKA VISUAL BLIND:
+            // Jika Blind Mode aktif, kartu di tangan kita atau discard pile terlihat sebagai 'blind' (mata ungu)
+            // Kecuali suit 'mirror' atau 'purple' (opsional, jika ingin tetap terlihat)
+            if (isBlinded) {
+                // Tampilkan sebagai mata ungu, TAPI simpan nilai aslinya di memori
+                // Jadi nanti saat isBlinded false, dia otomatis render assetKey asli di frame berikutnya
+                assetKey = 'blind'; 
             }
+
+            // Render Shadow
+            if (this.suit === 'mirror') { ctx.shadowColor = COLORS.mirror; ctx.shadowBlur = 20; } 
+            else if (this.suit === 'purple') { ctx.shadowColor = COLORS.purple; ctx.shadowBlur = 20; } 
+            else if (assetKey === 'blind') { ctx.shadowColor = COLORS.purple; ctx.shadowBlur = 15; } // Shadow ungu untuk blind
+            else { ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = (this.isSelected || this.isDragging) ? 25 : 5; }
+            
             ctx.shadowOffsetY = (this.isSelected || this.isDragging) ? 15 : 5;
 
-            if (IMAGES[this.suit]) {
-                ctx.drawImage(IMAGES[this.suit], -drawW/2, -drawH/2, drawW, drawH);
+            // Gambar Kartu (Entah itu Fire, Water, atau Blind/Mata)
+            if (IMAGES[assetKey]) {
+                ctx.drawImage(IMAGES[assetKey], -drawW/2, -drawH/2, drawW, drawH);
             } else {
                 ctx.fillStyle = '#fff'; ctx.fillRect(-drawW/2, -drawH/2, drawW, drawH);
             }
-            ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-
-            if (this.suit !== 'mirror') {
+            
+            // Gambar Angka (Hanya jika BUKAN mode blind dan bukan kartu spesial)
+            if (assetKey !== 'blind' && this.suit !== 'mirror' && this.suit !== 'purple') {
+                ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
                 ctx.fillStyle = "#FFFFFF"; ctx.strokeStyle = "#000000"; ctx.lineWidth = 2; 
                 let fontSize = drawW * 0.18; 
                 ctx.font = `700 ${fontSize}px 'Cinzel', serif`;
@@ -517,68 +1185,193 @@ class Card {
                 ctx.fillText(this.value, drawW/2 - padX, drawH/2 - padY);
             }
         } else {
+            // Bagian Belakang Kartu
             ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 5;
-            if(IMAGES.back) {
-                ctx.drawImage(IMAGES.back, -drawW/2, -drawH/2, drawW, drawH);
-            } else {
-                ctx.fillStyle = '#333'; ctx.fillRect(-drawW/2, -drawH/2, drawW, drawH);
-            }
+            if(IMAGES.back) ctx.drawImage(IMAGES.back, -drawW/2, -drawH/2, drawW, drawH);
+            else { ctx.fillStyle = '#333'; ctx.fillRect(-drawW/2, -drawH/2, drawW, drawH); }
         }
         ctx.restore();
     }
-
-    startFlip() { this.flipping = true; }
+startFlip() { this.flipping = true; }
 }
 
+
+// --- NEW CINEMATIC PROJECTILE CLASS ---
 class ProjectileCard {
-    constructor(targetIsMe, slowMotion) {
-        this.x = width / 2;
-        this.y = height / 2;
-        this.targetIsMe = targetIsMe;
-        this.creationTime = Date.now();
-        this.isSlow = slowMotion;
-        this.speed = slowMotion ? 1.0 : 15; 
+    constructor(targetIsMe, delayOffset = 0) {
+        // 1. Muncul dari DECK (Kiri Tengah)
+        this.x = 60; 
+        this.y = height / 2 + 30;
+        
+        this.targetIsMe = targetIsMe; // True = Nyerang Kita, False = Nyerang Lawan
+        this.startTime = Date.now() + delayOffset; // Delay sedikit biar 2 kartu tidak numpuk total
+        
+        // State: 0=Menuju Tengah, 1=SlowMo/ParryWindow, 2=Menuju Korban
+        this.phase = 0; 
+        
+        this.phaseStart = this.startTime;
         this.isDead = false;
         this.angle = 0;
+        
+        // Visual
+        this.rotationSpeed = 15; // Berputar cepat saat terbang
     }
 
     update() {
-        if (this.isSlow) {
-            if (Date.now() - this.creationTime > 2000) {
-                this.isSlow = false;
-                this.speed = 15; 
-                canParry = false; 
-                showFloatingText("TOO LATE!", width/2, height/2, "#666");
+        let now = Date.now();
+        if (now < this.startTime) return; // Tunggu delay offset
+
+        let elapsed = now - this.phaseStart;
+
+        // --- PHASE 1: DECK KE TENGAH (Durasi 1.5 Detik) ---
+        if (this.phase === 0) {
+            let duration = 1500; 
+            let t = Math.min(elapsed / duration, 1);
+            
+            // Ease Out Cubic agar melambat saat sampai tengah
+            let ease = 1 - Math.pow(1 - t, 3); 
+
+            let startX = 60;
+            let startY = height / 2 + 30;
+            let targetX = width / 2;
+            let targetY = height / 2;
+
+            this.x = startX + (targetX - startX) * ease;
+            this.y = startY + (targetY - startY) * ease;
+            this.angle += 0.2; // Putaran visual
+
+            if (t >= 1) {
+                this.phase = 1; // Masuk fase Slow Motion
+                this.phaseStart = now;
+                
+                // TRIGGER GLOBAL SLOW MOTION & PARRY
+                if (this.targetIsMe) {
+                    // Hanya aktifkan parry jika ini serangan ke kita
+                    canParry = true;
+                    slowMoActive = true; 
+                    showFloatingText("!!! PARRY NOW !!!", width/2, height/2 - 80, "#FF0000");
+                }
             }
         }
 
-        if (this.targetIsMe) {
-            this.y += this.speed;
-            if (this.y > height - 100) this.isDead = true; 
-        } else {
-            this.y -= this.speed; 
-            if (this.y < 100) this.isDead = true;
+        // --- PHASE 2: SLOW MOTION DI TENGAH (Durasi 1.5 Detik) ---
+        else if (this.phase === 1) {
+            let duration = 1500;
+            
+            // Kartu berputar pelan sekali (efek dramatis)
+            this.angle += 0.02; 
+            
+            // Sedikit mengambang (Floating effect)
+            this.y = (height / 2) + Math.sin(elapsed * 0.005) * 10;
+
+            // Jika waktu habis, dan belum di-Parry -> Lanjut Hantam
+            if (elapsed >= duration) {
+                this.phase = 2;
+                this.phaseStart = now;
+                
+                // Matikan Slow Mo
+                slowMoActive = false;
+                canParry = false;
+                timeScale = 1.0;
+            }
         }
-        this.angle += 0.1;
+
+        // --- PHASE 3: HANTAM TARGET (Cepat) ---
+        else if (this.phase === 2) {
+            // Target tergantung siapa yang kena (Kita atau Lawan)
+            let targetY = this.targetIsMe ? height + 100 : -100;
+            let speed = 25; // Kecepatan hantam
+
+            // Gerak Vertikal Lurus ke target
+            if (this.targetIsMe) this.y += speed;
+            else this.y -= speed;
+            
+            this.angle += 0.5; // Putar gila-gilaan saat nyerang
+
+            // --- DETEKSI TABRAKAN (HIT) ---
+            if (this.targetIsMe && this.y > height - 50) {
+                this.handleImpact(true); // Kena Kita
+            } else if (!this.targetIsMe && this.y < 50) {
+                this.handleImpact(false); // Kena Lawan (Makan Tuan atau Serangan Kita)
+            }
+        }
+    }
+
+    handleImpact(hitMe) {
+        this.isDead = true;
+        spawnExplosion(this.x, this.y, hitMe ? '#FF0000' : '#FFAA00');
+        playSound('crit'); // Suara ledakan
+
+        if (hitMe) {
+            // --- LOGIKA HUKUMAN: TERIMA KARTU ---
+            // Konversi Projectile menjadi Kartu Asli di Tangan
+            let penaltyCard = drawCardFromDeckLogic(); // Ambil kartu random
+            if(penaltyCard) {
+                penaltyCard.x = this.x; // Posisi mulai dari posisi ledakan projectile
+                penaltyCard.y = this.y;
+                penaltyCard.isFaceUp = true; // Langsung terbuka (reveal)
+                penaltyCard.shake = 20; // Efek getar
+                
+                // Jika blind mode aktif, inisialisasi physicsnya
+                if(isBlinded) penaltyCard.initPhysics();
+                
+                myHand.push(penaltyCard);
+                
+                // Rapikan tangan agar kartu baru mencari tempatnya
+                if(!isBlinded) rearrangeHand();
+            }
+            
+            showFloatingText("CRITICAL HIT! (+1)", width/2, height/2, "red");
+            startScreenShake(); // Efek layar getar
+            
+            // Sync ke server kalau kita kena (opsional, untuk visual lawan)
+            if (conn && conn.open) conn.send({ type: 'PENALTY_SYNC' }); 
+
+        } else {
+            // Kena Lawan
+            showFloatingText("ENEMY HIT!", width/2, 100, "yellow");
+        }
+    }
+
+    // Fungsi dipanggil saat tombol Mirror ditekan
+    parry() {
+        if (this.phase === 1 && this.targetIsMe) {
+            this.targetIsMe = false; // Balikkan arah ke lawan!
+            this.phase = 2; // Langsung masuk fase serang (skip sisa slow mo)
+            this.phaseStart = Date.now(); // Reset timer animasi gerak
+            
+            // Visual Feedback
+            spawnExplosion(this.x, this.y, '#00FFFF'); // Ledakan biru mirror
+        }
     }
 
     draw(ctx) {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
+        
+        // Z-Index Visual: Shadow tebal agar terlihat melayang tinggi
+        ctx.shadowColor = "rgba(0,0,0,0.8)";
+        ctx.shadowBlur = 30; 
+        ctx.shadowOffsetY = 20;
+
+        // Glow sesuai target (Merah=Bahaya/Ke Kita, Emas=Ke Lawan/Kita Nyerang)
+        if (this.phase === 1) { // Saat Slow Mo
+             ctx.strokeStyle = this.targetIsMe ? "#FF0000" : "#00FFFF";
+             ctx.lineWidth = 5;
+             ctx.strokeRect(-cardW/2, -cardH/2, cardW, cardH);
+        }
+
         if(IMAGES.back) {
             ctx.drawImage(IMAGES.back, -cardW/2, -cardH/2, cardW, cardH);
         } else {
-            ctx.fillStyle = '#333'; ctx.fillRect(-cardW/2, -cardH/2, cardW, cardH);
-        }
-        
-        if(this.isSlow) {
-            ctx.strokeStyle = '#00FFFF'; ctx.lineWidth = 4;
-            ctx.strokeRect(-cardW/2, -cardH/2, cardW, cardH);
+            ctx.fillStyle = '#FF4444'; 
+            ctx.fillRect(-cardW/2, -cardH/2, cardW, cardH);
         }
         ctx.restore();
     }
 }
+
 
 class Particle {
     constructor(x, y, color, isExplosion) {
@@ -601,100 +1394,7 @@ class Particle {
     }
 }
 
-// --- MATCHMAKING & NETWORKING FUNCTIONS ---
-
-// UI Helper Functions
-function showLoading(msg) {
-    const layer = document.getElementById('loading-layer');
-    layer.classList.remove('hidden'); 
-    layer.style.background = 'rgba(0,0,0,0.8)';
-    document.getElementById('loading-msg').innerText = msg;
-}
-
-function hideLoading() { 
-    document.getElementById('loading-layer').classList.add('hidden'); 
-}
-
-function showSearchingUI() {
-    document.getElementById('lobby-main').classList.add('hidden');
-    document.getElementById('lobby-searching').classList.remove('hidden');
-    document.getElementById('search-status').innerText = 'Connecting to matchmaking server...';
-    document.getElementById('queue-position').innerText = '';
-}
-
-function showConnectingUI() {
-    document.getElementById('lobby-searching').classList.add('hidden');
-    document.getElementById('lobby-connecting').classList.remove('hidden');
-    document.getElementById('connecting-status').innerText = 'Establishing P2P connection...';
-}
-
-function resetLobby() {
-    if (socket) {
-        socket.disconnect();
-        socket = null;
-    }
-    if (peer) {
-        peer.destroy();
-        peer = null;
-    }
-    conn = null;
-    isSearching = false;
-    isHost = false;
-    
-    document.getElementById('lobby-main').classList.remove('hidden');
-    document.getElementById('lobby-searching').classList.add('hidden');
-    document.getElementById('lobby-connecting').classList.add('hidden');
-    document.getElementById('lobby-screen').classList.remove('hidden');
-    
-    hideLoading();
-    
-    if (matchmakingTimeout) {
-        clearTimeout(matchmakingTimeout);
-        matchmakingTimeout = null;
-    }
-}
-
-// --- BROKER CONNECTION & MATCHMAKING ---
-
-function checkBrokerConnection() {
-    const statusEl = document.getElementById('broker-status');
-    if (!statusEl) return;
-    
-    fetch(BROKER_URL + '/health')
-        .then(response => response.json())
-        .then(data => {
-            statusEl.innerText = 'Online';
-            statusEl.style.color = '#00FF00';
-        })
-        .catch(error => {
-            statusEl.innerText = 'Offline';
-            statusEl.style.color = '#FF0000';
-            console.error('Broker server unavailable:', error);
-        });
-}
-
-function startMatchmaking() {
-  startBGM();
-    if (isSearching) return;
-    
-    showSearchingUI();
-    isSearching = true;
-    
-    if (typeof io === 'undefined') {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
-        script.onload = () => initializeSocket();
-        script.onerror = () => {
-            document.getElementById('search-status').innerText = 'Failed to load Socket.io. Please check your connection.';
-            isSearching = false;
-            setTimeout(() => resetLobby(), 3000);
-        };
-        document.head.appendChild(script);
-    } else {
-        initializeSocket();
-    }
-}
-
+// --- SOCKET LOGIC ---
 function initializeSocket() {
     try {
         socket = io(BROKER_URL, {
@@ -706,7 +1406,6 @@ function initializeSocket() {
         socket.on('connect', () => {
             console.log('Connected to matchmaking server');
             document.getElementById('search-status').innerText = 'Connected. Generating Peer ID...';
-            
             createPeerForMatchmaking();
         });
 
@@ -730,21 +1429,18 @@ function initializeSocket() {
         });
 
         socket.on('timeout', (data) => {
-            console.log('Matchmaking timeout:', data);
             document.getElementById('search-status').innerText = data.message;
             isSearching = false;
             setTimeout(() => resetLobby(), 3000);
         });
 
         socket.on('error', (data) => {
-            console.error('Broker error:', data);
             document.getElementById('search-status').innerText = data.message || 'Server error occurred.';
             isSearching = false;
             setTimeout(() => resetLobby(), 3000);
         });
 
         socket.on('disconnect', (reason) => {
-            console.log('Disconnected from broker:', reason);
             if (isSearching) {
                 document.getElementById('search-status').innerText = 'Disconnected from server.';
                 isSearching = false;
@@ -762,141 +1458,157 @@ function initializeSocket() {
 
 function createPeerForMatchmaking() {
     if (peer) peer.destroy();
-    
-    peer = new Peer(undefined, {
-        debug: 1
-    });
+    peer = new Peer(undefined, { debug: 1 });
 
     peer.on('open', (id) => {
         myPeerID = id;
-        console.log('My Peer ID:', id);
         document.getElementById('search-status').innerText = 'Peer ID generated. Joining queue...';
-        
         if (socket && socket.connected) {
             socket.emit('join_queue', { peerId: myPeerID });
         }
     });
 
     peer.on('connection', (c) => {
-        console.log('Incoming connection from:', c.peer);
         conn = c;
         setupConnection();
-        
-        if (conn.open) {
-            handleConnectionReady();
-        } else {
-            conn.on('open', handleConnectionReady);
-        }
+        if (conn.open) handleConnectionReady();
+        else conn.on('open', handleConnectionReady);
     });
 
     peer.on('error', (err) => {
-        console.error('PeerJS error:', err);
         if (isSearching) {
             document.getElementById('search-status').innerText = 'PeerJS error: ' + err.type;
             isSearching = false;
             setTimeout(() => resetLobby(), 3000);
         }
     });
-
-    peer.on('disconnected', () => {
-        console.log('Peer disconnected');
-        if (isSearching) {
-            resetLobby();
-        }
-    });
 }
 
 function handleMatchFound(data) {
-    if (!peer || !peer.id) {
-        console.error('Peer not ready when match found');
-        return;
-    }
-
     isHost = data.role === 'host';
     const targetPeerId = data.opponentId;
-    
-    console.log(`Match found! Role: ${isHost ? 'HOST' : 'GUEST'}, Target: ${targetPeerId}`);
-    
     showConnectingUI();
 
     if (isHost) {
-        console.log('Host connecting to:', targetPeerId);
         conn = peer.connect(targetPeerId, { reliable: true });
         setupConnection();
-        
         conn.on('open', handleConnectionReady);
         conn.on('error', (err) => {
-            console.error('Connection error:', err);
             document.getElementById('connecting-status').innerText = 'Connection failed. Please try again.';
             setTimeout(() => resetLobby(), 3000);
         });
     } else {
         document.getElementById('connecting-status').innerText = 'Waiting for host connection...';
-        
         matchmakingTimeout = setTimeout(() => {
             if (!conn || !conn.open) {
-                document.getElementById('connecting-status').innerText = 'Connection timeout. Please try again.';
+                document.getElementById('connecting-status').innerText = 'Connection timeout.';
                 setTimeout(() => resetLobby(), 2000);
             }
         }, 15000);
     }
 }
 
+
+
 function setupConnection() {
     if (!conn) return;
-
-    conn.on('open', () => { 
-        console.log("P2P connection established"); 
-    });
-    
-    conn.on('data', (data) => { 
-        console.log("Received data:", data.type); 
-        handleNetworkData(data); 
-    });
+    conn.on('open', () => { console.log("P2P connection established"); });
+    conn.on('data', (data) => { handleNetworkData(data); });
     
     conn.on('close', () => { 
-        console.log("Connection closed");
         if(gameState !== 'GAMEOVER' && gameState !== 'MENU') {
             endGame("DISCONNECTED", "Opponent left the game"); 
         }
     });
-
     conn.on('error', (err) => {
-        console.error('Connection error:', err);
-        if (gameState === 'PLAYING') {
-            endGame("ERROR", "Connection error occurred");
-        }
+        if (gameState === 'PLAYING') endGame("ERROR", "Connection error occurred");
     });
 }
 
-function handleConnectionReady() {
+    function handleConnectionReady() {
     console.log('Connection ready - starting game');
     
-    if (matchmakingTimeout) {
-        clearTimeout(matchmakingTimeout);
-        matchmakingTimeout = null;
-    }
+    // PASANG BACKGROUND DI SINI (Saat Match Found / Siap Main)
+    document.body.style.backgroundImage = "url('https://github.com/viqihakbarrr-cyber/kkk/blob/main/BG.png?raw=true')";
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundPosition = "center";
+
+    if (matchmakingTimeout) { clearTimeout(matchmakingTimeout); matchmakingTimeout = null; }
 
     document.getElementById('lobby-screen').classList.add('hidden');
-    document.getElementById('lobby-connecting').classList.add('hidden');
+    if (socket && socket.connected) socket.emit('leave_queue');
+    if (isHost) startMultiplayerGame();
+}
+
+function handleNetworkData(data) {
+    if (data.type === 'START_GAME') {
+        // 1. Reset Variabel & UI
+        resetGameVars();
+        document.getElementById('lobby-screen').classList.add('hidden');
+        document.getElementById('game-over').style.display = 'none';
+        
+        // Sembunyikan Loading Layer jika masih ada
+        document.getElementById('loading-layer').classList.add('hidden');
+
+        // [PENTING] Tampilkan Canvas & Resize agar koordinat benar
+        const cvs = document.getElementById('gameCanvas');
+        cvs.style.display = 'block';
+        resize(); 
+
+        // 2. Set Status Game & Giliran
+        gameState = 'PLAYING';
+        turn = data.turn === 'p2' ? 'me' : 'opponent';
+
+        // 3. [PERBAIKAN UTAMA] Generate Objek Kartu dari Data yang Diterima
+        // Client adalah P2, jadi ambil data.p2Hand untuk hand kita sendiri
+        let myStartCards = data.p2Hand.map(c => new Card(c.suit, c.value, true));
+        
+        // Buat objek kartu untuk Top Card (kartu di tengah)
+        let topCardObj = new Card(data.topDiscard.suit, data.topDiscard.value, true);
+
+        // 4. Jalankan Animasi Pembagian Kartu
+        // data.p1HandCount adalah jumlah kartu lawan (Host)
+        playDealAnimation(myStartCards, data.p1HandCount, topCardObj);
     
-    if (socket && socket.connected) {
-        socket.emit('leave_queue');
-    }
-
-    if (isHost) {
-        startMultiplayerGame();
+    } else if (data.type === 'OPPONENT_MOVE') {
+        // Menangani saat lawan mengeluarkan kartu
+        processOpponentMove(data.card, data.isCrit);
+    
+    } else if (data.type === 'OPPONENT_DRAW') {
+        // Menangani saat lawan mengambil kartu dari deck
+        addCardToOpponentHand();
+        turn = 'me';
+        showFloatingText("YOUR TURN", width/2, height/2 + 100, "#0f0");
+        
+    } else if (data.type === 'PARRY_SUCCESS') {
+        showFloatingText("PARRIED!", width/2, height/2, COLORS.mirror);
+        playSound('parry');
+        projectiles = []; 
+        spawnProjectiles(true, false); 
+        
+        if (opponentHand.length > 0) {
+            opponentHand.pop(); 
+            rearrangeOpponentHand();
+        }
+        let mirrorCard = new Card('mirror', 0, false);
+        mirrorCard.x = width/2; mirrorCard.y = -100;
+        mirrorCard.targetX = width/2; mirrorCard.targetY = height/2;
+        discardPile.push(mirrorCard);
+    } else if (data.type === 'GAME_OVER_SYNC') {
+        // Jika menerima sinyal ini, berarti lawan menang, maka kita kalah
+        endGame("GAME OVER", "Opponent won the match", false);
+      
+    } else if (data.type === 'REQUEST_REMATCH') {
+        rematchOpp = true;
+        showFloatingText("Opponent wants rematch!", width/2, height/2, "#fff");
+        checkRematchStart();
+        
+    } else if (data.type === 'PENALTY_SYNC') {
+        // Jika lawan kena projectile, tambah kartu visual di tangan mereka
+        addCardToOpponentHand(); 
     }
 }
 
-function cancelMatchmaking() {
-    if (socket && socket.connected) {
-        socket.emit('leave_queue');
-    }
-    resetLobby();
-}
-
-// --- REMATCH LOGIC (Updated for matchmaking) ---
 
 function requestRematch() {
     if(!rematchMe) {
@@ -916,81 +1628,27 @@ function checkRematchStart() {
         if(isHost) startMultiplayerGame();
     }
 }
-
 function resetGameVars() {
     rematchMe = false; rematchOpp = false;
     document.getElementById('btn-rematch').classList.remove('btn-secondary');
     document.getElementById('btn-rematch').innerText = "REMATCH";
     document.getElementById('rematch-msg').classList.add('hidden');
     projectiles = [];
-    parryActive = false; // reset parry flag when game resets
+    parryActive = false;
+    
+    // NEW
+    isBlinded = false;
+    blindTurnsLeft = 0;
 }
 
-// --- DATA HANDLING ---
-// --- DATA HANDLING (PERBAIKAN) ---
-function handleNetworkData(data) {
-    if (data.type === 'START_GAME') {
-        resetGameVars();
-        document.getElementById('lobby-screen').classList.add('hidden');
-        document.getElementById('lobby-connecting').classList.add('hidden');
-        document.getElementById('game-over').style.display = 'none';
-        hideLoading(); gameState = 'PLAYING';
-        turn = data.turn === 'p2' ? 'me' : 'opponent';
-        let myStartCards = data.p2Hand.map(c => new Card(c.suit, c.value, true));
-        let topCard = new Card(data.topDiscard.suit, data.topDiscard.value, true);
-        playDealAnimation(myStartCards, data.p1HandCount, topCard);
-    
-    } else if (data.type === 'OPPONENT_MOVE') {
-        processOpponentMove(data.card, data.isCrit);
-    
-    } else if (data.type === 'OPPONENT_DRAW') {
-        // Logika saat lawan menarik kartu biasa (Draw manual)
-        addCardToOpponentHand();
-        turn = 'me';
-        
-    } else if (data.type === 'PARRY_SUCCESS') {
-        projectiles = []; 
-        showFloatingText("PARRIED!", width/2, height/2, COLORS.mirror);
-        playSound('parry');
-        // spawnProjectiles on receive: keep for dramatic effect but cosmetic issue noted earlier
-        spawnProjectiles(true, false);
-        
-        // Hapus kartu Mirror dari tangan lawan (visual)
-        if (opponentHand.length > 0) {
-            opponentHand.pop(); 
-            rearrangeOpponentHand();
-        }
-        
-        // Buang kartu Mirror ke discard pile
-        let mirrorCard = new Card('mirror', 0, false);
-        mirrorCard.x = width/2; mirrorCard.y = -100;
-        mirrorCard.targetX = width/2; mirrorCard.targetY = height/2;
-        discardPile.push(mirrorCard);
-        
-    } else if (data.type === 'REQUEST_REMATCH') {
-        rematchOpp = true;
-        showFloatingText("Opponent wants rematch!", width/2, height/2, "#fff");
-        checkRematchStart();
-        
-    } else if (data.type === 'PENALTY_SYNC') {
-        // --- PERBAIKAN DI SINI ---
-        // Hanya tambahkan kartu ke tangan lawan berdasarkan network sync
-        console.log('Penalty sync received: Adding card to opponent');
-        addCardToOpponentHand(); 
-    }
-}
 
-// --- FUNGSI BANTUAN BARU (Agar kode lebih rapi) ---
 function addCardToOpponentHand() {
     let c = new Card('fire', 1, false); 
-    c.x = width/2; c.y = -50; // Muncul dari atas
+    c.x = width/2; c.y = -50; 
     c.isFaceUp = false;
     opponentHand.push(c);
-    
     rearrangeOpponentHand();
-    
     playSound('deal');
-    // Jika ini draw biasa (bukan penalty crit), floating text dihandle pengirim data
 }
 
 function rearrangeOpponentHand() {
@@ -999,34 +1657,59 @@ function rearrangeOpponentHand() {
     let oppH = cardH * oppScale;
     let oppSpread = Math.min(width / (opponentHand.length + 2), oppW * 0.8);
     let oppStart = width/2 - ((opponentHand.length - 1) * oppSpread) / 2;
-    
     opponentHand.forEach((c, i) => {
         c.targetX = oppStart + i * oppSpread; 
         c.targetY = oppH * 0.6;
     });
 }
 
-
-// --- GAME LOGIC ---
 function startMultiplayerGame() {
-    console.log("Starting Multiplayer Game Logic...");
-    document.getElementById('lobby-screen').classList.add('hidden');
     gameState = 'PLAYING';
+    cardsDealt = false; // Reset status kartu
+    
+    // --- PERBAIKAN DI SINI ---
+    // Ganti 'lobby-ui' menjadi 'lobby-screen' dan gunakan classList
+    const lobbyScreen = document.getElementById('lobby-screen');
+    if(lobbyScreen) lobbyScreen.classList.add('hidden');
+    
+    const mmUI = document.getElementById('matchmaking-ui');
+    if(mmUI) mmUI.classList.add('hidden');
+    // -------------------------
+    
+    // PASTIKAN POPUP WIN/LOSE TERTUTUP
+    const gameOverScreen = document.getElementById('game-over');
+    if(gameOverScreen) gameOverScreen.style.display = 'none'; 
+    
+    // Reset HP atau variabel lain jika perlu
+    // myHP = 100; // (Jika nanti ada HP)
+    // opponentHP = 100;
+
+    // 1. Siapkan Canvas
+    const cvs = document.getElementById('gameCanvas');
+    if(cvs) {
+        cvs.style.display = 'block'; 
+        resize(); 
+    }
     
     function generateHand() {
         let h = [];
+        // Kartu wajib (Basic)
         h.push({suit: 'fire', value: Math.ceil(Math.random()*9)});
         h.push({suit: 'water', value: Math.ceil(Math.random()*9)});
         h.push({suit: 'leaf', value: Math.ceil(Math.random()*9)});
-        h.push({suit: 'mirror', value: 0});
         
-        let r = Math.random();
-        if(r < 0.15) h.push({suit: 'mirror', value:0});
-        else {
-            let s = BASIC_SUITS[Math.floor(Math.random()*3)];
-            h.push({suit: s, value: Math.ceil(Math.random()*9)});
+        // Slot 4 & 5: Random (Bisa Mirror atau Purple)
+        for(let k=0; k<2; k++) {
+            let r = Math.random();
+            if(r < 0.10) h.push({suit: 'mirror', value:0});
+            else if(r < 0.20) h.push({suit: 'purple', value:0}); // 10% Chance Purple
+            else {
+                let s = BASIC_SUITS[Math.floor(Math.random()*3)];
+                h.push({suit: s, value: Math.ceil(Math.random()*9)});
+            }
         }
         
+        // Acak posisi
         for (let i = h.length - 1; i > 0; i--) { 
             const j = Math.floor(Math.random() * (i + 1)); 
             [h[i], h[j]] = [h[j], h[i]]; 
@@ -1034,36 +1717,49 @@ function startMultiplayerGame() {
         return h;
     }
 
+    // 2. Generate Data
     let p1H = generateHand();
     let p2H = generateHand();
     let deckCount = 30; 
     let top = {suit: BASIC_SUITS[Math.floor(Math.random()*3)], value: Math.ceil(Math.random()*9)};
     
+    // 3. Konversi Data Host menjadi Object Card
     let myStartCards = p1H.map(c => new Card(c.suit, c.value, true));
     let topCardObj = new Card(top.suit, top.value, true);
+    
+    // Tentukan Giliran
     turn = Math.random() > 0.5 ? 'me' : 'opponent';
 
-    conn.send({
-        type: 'START_GAME', deckCount: deckCount, topDiscard: top,
-        p1HandCount: 5, p2Hand: p2H, turn: turn === 'me' ? 'p1' : 'p2'
-    });
+    // 4. Kirim Data ke Client (Player 2)
+    if(conn && conn.open) {
+        conn.send({
+            type: 'START_GAME', 
+            deckCount: deckCount, 
+            topDiscard: top,
+            p1HandCount: 5, // Beritahu client berapa kartu yang kita pegang
+            p2Hand: p2H,    // Kirim kartu milik client
+            turn: turn === 'me' ? 'p1' : 'p2'
+        });
+    }
+
+    // 5. Mulai Animasi di Layar Host
     playDealAnimation(myStartCards, 5, topCardObj);
 }
 
+
 function playDealAnimation(myCards, oppCount, topCard) {
-    // Robust dealing with safety fallbacks to avoid infinite loops/stalls
     isAnimating = true; myHand = []; opponentHand = []; discardPile = [];
     let dealSpeed = 100;
 
-    // Coerce oppCount and guard against bad/missing values
     oppCount = Number(oppCount);
     if (!isFinite(oppCount) || oppCount < 0) oppCount = Math.max(5, Math.floor(myCards.length));
 
     let totalCards = (Array.isArray(myCards) ? myCards.length : 0) + oppCount;
     let dealt = 0;
-    let safetyCounter = 0; // extra guard
+    let safetyCounter = 0; 
 
     function finishDeal() {
+      cardsDealt = true;
         if (dealInterval) clearInterval(dealInterval);
         setTimeout(() => {
             try {
@@ -1077,49 +1773,41 @@ function playDealAnimation(myCards, oppCount, topCard) {
 
     let dealInterval = setInterval(() => {
         safetyCounter++;
-        if (safetyCounter > 1000) { // absolute safety
-            console.warn('Dealing safety timeout triggered');
-            finishDeal();
-            return;
-        }
-
+        if (safetyCounter > 1000) { finishDeal(); return; }
         if (dealt >= totalCards) { finishDeal(); return; }
 
         let c = null;
         if (dealt % 2 === 0) {
-            // deal to opponent
             c = new Card('fire', 1, false);
             c.x = 60; c.y = height/2 + 30; c.isFaceUp = false;
             opponentHand.push(c);
         } else {
-            // deal to me (from provided myCards), fallback if missing
             let cardIndex = Math.floor(dealt / 2);
             if (Array.isArray(myCards) && myCards[cardIndex]) {
                 c = myCards[cardIndex];
-                c.x = 60; c.y = height/2 + 30; c.isFaceUp = false;
-                myHand.push(c);
             } else {
-                // fallback: generate a harmless basic card so dealing continues
                 const s = BASIC_SUITS[Math.floor(Math.random() * BASIC_SUITS.length)];
                 c = new Card(s, Math.ceil(Math.random() * 9), true);
-                c.x = 60; c.y = height/2 + 30; c.isFaceUp = false;
-                myHand.push(c);
             }
+            c.x = 60; c.y = height/2 + 30; c.isFaceUp = false;
+            myHand.push(c);
         }
-
         playSound('deal');
         dealt++;
     }, dealSpeed);
 
-    // Final safety in case interval doesn't clear for any reason
     setTimeout(() => { if (isAnimating) finishDeal(); }, 20000);
 }
 
 function isValidMove(card, topCard) {
-    if (card.suit === 'mirror') return true; 
-    if (topCard.suit === 'mirror') return true; 
+    if (card.suit === 'mirror') return true; // Universal: Selalu boleh turun
+    if (card.suit === 'purple') return true; 
+    if (topCard.suit === 'mirror') return true;
+    if (topCard.suit === 'purple') return true; 
     return card.suit === topCard.suit || card.value === topCard.value;
 }
+
+
 
 function playerInput(cardIndex) {
     if (gameState !== 'PLAYING' || isAnimating) return false;
@@ -1128,21 +1816,31 @@ function playerInput(cardIndex) {
     let top = discardPile[discardPile.length - 1];
     card.isDragging = false; 
 
-    if (canParry) {
+    // --- 1. LOGIKA PARRY (JIKA ADA SERANGAN KRITIKAL FASE TENGAH) ---
+    if (canParry && slowMoActive) { // Pastikan hanya bisa parry saat slow mo aktif
         if (card.suit === 'mirror') {
-            // Mark parryActive immediately to prevent delayed projectiles
             parryActive = true;
-            // Give a short window to keep the flag true so the delayed spawn check will see it
             setTimeout(() => { parryActive = false; }, 400);
 
+            // Buang kartu Mirror ke tengah
             executeMove(cardIndex, card, top, false);
-            projectiles.forEach(p => { p.speed = 15; p.targetIsMe = false; p.isSlow = false; }); 
+            
+            // --- EKSEKUSI PARRY ---
+            projectiles.forEach(p => p.parry()); // Panggil fungsi parry di projectile
+            
             showFloatingText("MIRROR PARRY!", width/2, height/2, COLORS.mirror);
             playSound('parry');
+            
+            // Matikan Slow Mo Segera
             canParry = false;
+            slowMoActive = false;
+            
             conn.send({ type: 'PARRY_SUCCESS', card: { suit: card.suit, value: card.value } });
+            
+            if(myHand.length === 0) endGame("YOU WIN!", "Victory Achieved");
             return true;
         } else {
+            // Jika mencoba parry pakai kartu selain mirror
             showFloatingText("USE MIRROR!", card.x, card.y - 70, "red");
             card.shake = 20; playSound('error');
             return false;
@@ -1151,22 +1849,60 @@ function playerInput(cardIndex) {
 
     if (turn !== 'me') return false;
 
+    // --- 2. LOGIKA MOVE NORMAL ---
     if (isValidMove(card, top)) {
-        if (card.suit === 'mirror') {
-            executeMove(cardIndex, card, top, false);
-            playSound('play');
-            turn = 'me'; 
-            showFloatingText("EXTRA TURN", width/2, height/2 + 100, COLORS.mirror);
-            conn.send({ type: 'OPPONENT_MOVE', card: {suit: card.suit, value: card.value}, isCrit: false }); 
+        let isCrit = (card.suit !== 'mirror' && card.suit !== 'purple' && COUNTER_MAP[card.suit] === top.suit);
+
+        executeMove(cardIndex, card, top, isCrit);
+        
+    if (isBlinded) {
+        blindTurnsLeft--; // Kurangi jatah turn buta
+        if (blindTurnsLeft <= 0) {
+            endBlindMode(); // Panggil fungsi reset yang kita buat di poin 1
+            
+            // Kirim info ke lawan bahwa blind sudah habis (opsional, tergantung sync)
+            if(conn && conn.open) conn.send({ type: 'BLIND_END' }); 
         } else {
-            let isCrit = COUNTER_MAP[card.suit] === top.suit;
-            executeMove(cardIndex, card, top, isCrit);
+             showFloatingText(`Blind: ${blindTurnsLeft} turns left`, width/2, height/2 - 50, COLORS.purple);
+        }
+    }
+        // Cek Menang
+        if(myHand.length === 0) {
+            conn.send({ type: 'OPPONENT_MOVE', card: {suit: card.suit, value: card.value}, isCrit: false }); 
+            endGame("YOU WIN!", "Victory Achieved");
+            return true;
+        }
+
+        // --- 3. CEK EFEK KARTU ---
+        
+        if (card.suit === 'mirror') {
+            // -- [UPDATED] MIRROR: UNIVERSAL (NO EXTRA TURN) --
+            playSound('play');
+            // Mirror sekarang hanya berfungsi sebagai Wildcard biasa
+            // Giliran berpindah ke lawan
+            conn.send({ type: 'OPPONENT_MOVE', card: {suit: card.suit, value: card.value}, isCrit: false });
+            turn = 'opponent'; 
+        
+        } else if (card.suit === 'purple') {
+             // ... (Logic Purple Tetap Sama) ...
+             playSound('purple');
+             showFloatingText("BLIND CAST!", width/2, height/2, COLORS.purple);
+             conn.send({ type: 'OPPONENT_MOVE', card: { suit: card.suit, value: card.value }, isCrit: false, effect: 'BLIND' });
+             turn = 'opponent';
+
+        } else {
+            // -- KARTU BIASA --
+            // Spawn Crit Projectile jika Critical
+            if(isCrit) spawnProjectiles(false, false); // Target = False (Lawan)
+            
             conn.send({ type: 'OPPONENT_MOVE', card: { suit: card.suit, value: card.value }, isCrit: isCrit });
             turn = 'opponent';
         }
-        if(myHand.length === 0) endGame("YOU WIN!", "Victory Achieved");
+
         return true;
+    
     } else {
+        // Jika Salah Jalan
         card.shake = 20;
         showFloatingText("Invalid Move", card.x, card.y - 50, "red");
         playSound('error');
@@ -1177,8 +1913,8 @@ function playerInput(cardIndex) {
 function executeMove(index, card, top, isCrit) {
     card.isSelected = false;
     selectedIdx = -1;
-
     myHand.splice(index, 1);
+    checkWinCondition(); // Panggil cek menang setelah kartu kita berkurang
     discardPile.push(card);
     card.targetX = width/2; 
     card.targetY = height/2;
@@ -1192,62 +1928,123 @@ function executeMove(index, card, top, isCrit) {
 }
 
 function spawnProjectiles(targetIsMe, slowMotion) {
-    // spawn first immediately
-    projectiles.push(new ProjectileCard(targetIsMe, slowMotion));
-    // schedule second, but only create it if no parry happened in between
-    setTimeout(() => {
-        if (!parryActive) {
-            projectiles.push(new ProjectileCard(targetIsMe, slowMotion));
-        } else {
-            // suppressed by parry - play small effect instead
-            spawnExplosion(width/2, height/2, '#00FFFF');
-        }
-    }, 200);
+    // Spawn 2 Kartu Kritikal
+    // Kartu 1 (Langsung)
+    projectiles.push(new ProjectileCard(targetIsMe, 0));
+    
+    // Kartu 2 (Sedikit delay 100ms agar terlihat seperti 2 kartu beriringan)
+    projectiles.push(new ProjectileCard(targetIsMe, 150));
 }
 
-function processOpponentMove(cardData, isCrit) {
+
+function processOpponentMove(cardData, isCrit, effect) {
+    // 1. Buat instance kartu baru dari data yang diterima lawan
     let card = new Card(cardData.suit, cardData.value, false);
     
-    if(opponentHand.length > 0) opponentHand.pop();
-    
-    let oppScale = 0.8;
-    let oppW = cardW * oppScale;
-    let oppH = cardH * oppScale;
-    let oppSpread = Math.min(width / (opponentHand.length + 2), oppW * 0.8);
-    let oppStart = width/2 - ((opponentHand.length - 1) * oppSpread) / 2;
-    opponentHand.forEach((c, i) => {
-        c.targetX = oppStart + i * oppSpread; 
-        c.targetY = oppH * 0.6;
-    });
-    
-    card.x = width/2; card.y = -100;
-    card.targetX = width/2; card.targetY = height/2;
+    // Posisi animasi
+    card.x = width / 2;
+    card.y = -100;
+    card.targetX = width / 2;
+    card.targetY = height / 2;
+    card.isFaceUp = true;
+
+    // 2. Hapus satu kartu dari visual tangan lawan
+    if (opponentHand.length > 0) {
+        opponentHand.pop();
+        // Cek kalah dipindahkan ke delay bawah
+    }
+    rearrangeOpponentHand();
+
+    // 3. Masukkan ke discard pile
     discardPile.push(card);
-    playSound('play');
-    
-    if(cardData.suit === 'mirror') {
-        showFloatingText("OPPONENT MIRROR!", width/2, height/2, COLORS.mirror);
-        turn = 'opponent'; 
-        return;
+
+    // 4. Efek Khusus (Purple/Mirror)
+    if (cardData.suit === 'purple' || effect === 'BLIND') {
+        playSound('purple');
+        showFloatingText("YOU ARE BLINDED!", width / 2, height / 2, COLORS.purple);
+        isBlinded = true;
+        blindTurnsLeft = 3;
+        
+        // Efek visual kartu berhamburan
+        myHand.forEach(c => {
+            c.vx = (Math.random() - 0.5) * 8;
+            c.vy = (Math.random() - 0.5) * 8;
+            c.rotSpeed = (Math.random() - 0.5) * 0.2;
+        });
+        turn = 'me';
+    } 
+    else if (cardData.suit === 'mirror') {
+        // [UPDATED] Mirror Lawan = Universal biasa
+        playSound('play');
+        showFloatingText("WILDCARD!", width / 2, height / 2, COLORS.mirror);
+        turn = 'me'; // Giliran kembali ke kita (NO EXTRA TURN)
+    } 
+    else {
+        // Kartu Biasa / Crit
+        if (isCrit) {
+            playSound('crit');
+            // Jika lawan Crit, Projectile targetnya KITA (true)
+            spawnProjectiles(true, false); 
+        } else {
+            playSound('play');
+        }
+        turn = 'me';
     }
 
-    if(isCrit) {
-        playSound('crit'); showFloatingText("CRITICAL INCOMING!", width/2, height/2 - 50, COLORS[cardData.suit]);
-        
-        let hasMirror = myHand.some(c => c.suit === 'mirror');
-        
-        if (hasMirror) {
-            // spawn slow projectiles so player can parry; parryActive should be false here normally
-            spawnProjectiles(true, true); 
-            canParry = true;
-            showFloatingText("USE MIRROR TO PARRY!", width/2, height/2 + 50, "#00FFFF");
+    setTimeout(() => { checkWinCondition(); }, 500);
+} // <--- KURUNG KURAWAL INI SEBELUMNYA HILANG
+
+// PISAHKAN FUNCTION INI KELUAR
+function checkBlindStatus() {
+    if (isBlinded) {
+        blindTurnsLeft--;
+        if (blindTurnsLeft <= 0) {
+            isBlinded = false;
+            showFloatingText("SIGHT RESTORED", width/2, height/2, "#FFF");
+            
+            // Kembalikan posisi kartu ke formasi rapi
+            myHand.forEach(c => {
+                c.angle = 0;
+                c.vx = 0;
+                c.vy = 0;
+            });
+            rearrangeHand(); // Pastikan fungsi ini ada atau gunakan arrangeHand() jika namanya beda
         } else {
-            spawnProjectiles(true, false); 
+            showFloatingText(`${blindTurnsLeft} TURNS LEFT`, width / 2, height / 2 + 60, COLORS.purple);
         }
     }
-    
-    setTimeout(() => { if(opponentHand.length === 0) endGame("YOU LOSE", "Opponent cleared their hand"); }, 500);
-    turn = 'me';
+}
+
+function rearrangeHand() {
+    let pSpread = Math.min(width / (myHand.length + 1), cardW + 10);
+    let pStart = width/2 - ((myHand.length - 1) * pSpread) / 2;
+    myHand.forEach((c, i) => {
+        c.targetX = pStart + i * pSpread;
+        c.targetY = height - (cardH * 0.5);
+    });
+}
+
+
+    // Screen Shake Logic
+let shakeDuration = 0;
+function startScreenShake() {
+    shakeDuration = 20; // Frame durasi getar
+}
+
+// Update fungsi draw() sedikit untuk handle shake
+function draw() {
+    let shakeX = 0;
+    let shakeY = 0;
+    if (shakeDuration > 0) {
+        shakeX = (Math.random() - 0.5) * 20;
+        shakeY = (Math.random() - 0.5) * 20;
+        shakeDuration--;
+    }
+
+    ctx.save();
+    ctx.translate(shakeX, shakeY); // Terapkan getar ke seluruh canvas
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear dengan posisi relatif
 }
 
 function requestDraw() {
@@ -1265,39 +2062,86 @@ function requestDraw() {
     }
 
     if(newCard) {
+        // Set posisi awal di deck
         newCard.x = 60; 
         newCard.y = height/2 + 30; 
         newCard.isFaceUp = false; 
-        
+
+        // JIKA BLIND: Pastikan kartu punya physics random
+        if(isBlinded) {
+             newCard.initPhysics(); 
+             // Beri sedikit dorongan ke atas agar terlihat keluar dari deck
+             newCard.vy = -5; 
+        }
+
         myHand.push(newCard); 
         playSound('deal');
         
-        conn.send({ type: 'OPPONENT_DRAW' }); turn = 'opponent'; showFloatingText("Turn Ended", width/2, height/2, "#aaa");
+        // Kirim info ke lawan
+        conn.send({ type: 'OPPONENT_DRAW' }); 
+        
+        turn = 'opponent'; 
+        showFloatingText("Turn Ended", width/2, height/2, "#aaa");
     }
 }
+
 
 function drawCardFromDeckLogic() {
     let r = Math.random(); 
     if(r < 0.08) return new Card('mirror', 0, true);
+    if(r < 0.16) return new Card('purple', 0, true); // Tambahkan probability Purple
     let s = BASIC_SUITS[Math.floor(Math.random()*3)]; let v = Math.floor(Math.random()*9)+1;
     return new Card(s, v, true);
 }
 
+
 function spawnExplosion(x, y, color) { for(let i=0; i<30; i++) particles.push(new Particle(x, y, color, true)); }
 
-function endGame(title, subtitle) {
+// --- PERBAIKAN FUNGSI ENDGAME (SATU UNTUK SEMUA) ---
+function endGame(title, subtitle, isWin) {
+    if (gameState === 'GAMEOVER') return; // Mencegah pemanggilan ganda
     gameState = 'GAMEOVER';
-    document.getElementById('winner-text').innerText = title;
-    document.getElementById('sub-winner-text').innerText = subtitle;
-    document.getElementById('game-over').style.display = 'block';
+
+    console.log("Game Ended:", title);
+
+    // 1. Mainkan Audio
+    if (isWin) {
+        playSound('win'); // Pastikan Anda punya case 'win' di playSound atau ganti 'crit'
+    } else {
+        playSound('error'); // Suara kalah
+    }
+
+    // 2. Tampilkan UI HTML (Overlay)
+    const gameOverDiv = document.getElementById('game-over');
+    const winnerText = document.getElementById('winner-text');
+    const subText = document.getElementById('sub-winner-text');
+    const rematchBtn = document.getElementById('btn-rematch');
+
+    if (gameOverDiv && winnerText && subText) {
+        winnerText.innerText = title;
+        winnerText.style.color = isWin ? "#4CAF50" : "#F44336"; // Hijau jika menang, Merah jika kalah
+        
+        subText.innerText = subtitle;
+        
+        // Tampilkan Div
+        gameOverDiv.style.display = 'block';
+        
+        // Reset tombol rematch
+        if(rematchBtn) {
+            rematchBtn.classList.remove('btn-secondary');
+            rematchBtn.innerText = "REMATCH";
+        }
+    }
+
+    // 3. Matikan Loop/Interaksi jika perlu
+    // isAnimating = false;
 }
 
-// --- RENDER LOOP ---
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width / (window.devicePixelRatio||1), canvas.height / (window.devicePixelRatio||1));
     
-    projectiles.forEach(p => p.draw(ctx));
-
+    // 1. Gambar Deck (Paling Bawah)
     let deckX = 60; let deckY = height / 2 + 30;
     if (IMAGES.back) {
         let stackHeight = 15;
@@ -1310,43 +2154,36 @@ function draw() {
             ctx.drawImage(IMAGES.back, -cardW/2, -cardH/2, cardW, cardH);
             ctx.restore();
         }
-    } else {
-        ctx.fillStyle = '#333'; ctx.fillRect(deckX - cardW/2, deckY - cardH/2, cardW, cardH);
     }
 
+    // 2. Gambar Discard Pile (Kartu di Tengah)
     if (discardPile.length > 0) {
         let startIdx = Math.max(0, discardPile.length - 3);
         for(let i = startIdx; i < discardPile.length; i++) {
             let c = discardPile[i];
-            
             c.targetX = width/2;
             c.targetY = height/2;
-
             if(!isAnimating && Math.abs(c.x - width/2) < 5) c.x = width/2;
             if(!isAnimating && Math.abs(c.y - height/2) < 5) c.y = height/2;
-            
             c.draw(ctx, true, undefined, undefined, cardW, cardH);
         }
-    } else {
-        ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 2;
-        roundRect(ctx, width/2 - cardW/2, height/2 - cardH/2, cardW, cardH, 10); ctx.stroke();
     }
 
+    // 3. Gambar Kartu Lawan
     let oppScale = 0.8;
     let oppW = cardW * oppScale;
     let oppH = cardH * oppScale;
     let oppSpread = Math.min(width / (opponentHand.length + 2), oppW * 0.8);
     let oppStart = width/2 - ((opponentHand.length - 1) * oppSpread) / 2;
-    
     opponentHand.forEach((c, i) => {
         c.targetX = oppStart + i * oppSpread; 
         c.targetY = oppH * 0.6; 
         c.draw(ctx, false, undefined, undefined, oppW, oppH);
     });
 
+    // 4. Gambar Kartu Tangan Saya
     let pSpread = Math.min(width / (myHand.length + 1), cardW + 10);
     let pStart = width/2 - ((myHand.length - 1) * pSpread) / 2;
-    
     myHand.forEach((c, i) => {
         if (!c.isDragging && !c.isAnimatingPos) {
             c.targetX = pStart + i * pSpread;
@@ -1355,17 +2192,21 @@ function draw() {
             else if (c.isHovered) baseHeight = height - (cardH * 0.65);
             c.targetY = baseHeight;
         }
-        
         if (i !== dragIdx) {
             c.draw(ctx, undefined, undefined, undefined, cardW, cardH);
         }
     });
 
+    // 5. Gambar Kartu yang Sedang Di-drag
     if (dragIdx !== -1 && myHand[dragIdx]) {
         let c = myHand[dragIdx];
         c.draw(ctx, undefined, c.x, c.y, cardW, cardH);
     }
 
+    // 6. Gambar PROYEKTIL/CRIT (SEKARANG DI ATAS SEMUA KARTU)
+    projectiles.forEach(p => p.draw(ctx));
+
+    // 7. Gambar Efek Visual & Teks (Paling Depan)
     particles.forEach(p => p.draw(ctx));
     floatingTexts.forEach(t => t.draw(ctx));
 
@@ -1377,33 +2218,43 @@ function draw() {
     }
 }
 
+
 function update() {
-    for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(); if (particles[i].life <= 0) particles.splice(i, 1); }
-    for (let i = floatingTexts.length - 1; i >= 0; i--) { floatingTexts[i].update(); if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); }
-    
+    // 1. Update Particles
+    for (let i = particles.length - 1; i >= 0; i--) { 
+        particles[i].update(); 
+        if (particles[i].life <= 0) particles.splice(i, 1); 
+    }
+
+    // 2. Update Floating Text
+    for (let i = floatingTexts.length - 1; i >= 0; i--) { 
+        floatingTexts[i].update(); 
+        if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); 
+    }
+
+    // 3. Update Projectiles (NEW LOGIC)
     for (let i = projectiles.length - 1; i >= 0; i--) {
         let p = projectiles[i];
-        p.update();
-        if (p.isDead) {
-            if (p.targetIsMe) {
-                // Player hit by projectile -> apply penalty and sync to opponent
-                let c = drawCardFromDeckLogic();
-                c.x = width/2; c.y = height; c.isFaceUp = false;
-                myHand.push(c); playSound('deal');
-                // inform opponent via network so they will add card visually on their side
-                if (conn && conn.open) conn.send({ type: 'PENALTY_SYNC' }); 
-                canParry = false; 
-            } else {
-                // Projectile flew away (i.e. was parried). IMPORTANT: do NOT locally add a card to opponent here.
-                // The authoritative addition must come via PENALTY_SYNC from the network to avoid visual duplication.
-                // Play a cosmetic effect instead.
-                spawnExplosion(p.x, p.y, '#ffcc00');
-                playSound('deal');
-            }
-            projectiles.splice(i, 1);
-        }
+        p.update(); // Update physics & phase
+        if (p.isDead) projectiles.splice(i, 1);
+    }
+
+    // 4. Global Slow Motion Controller
+    // Kita Lerp timeScale agar transisi smooth (1.0 <-> 0.2)
+    let targetTimeScale = slowMoActive ? 0.2 : 1.0;
+    timeScale += (targetTimeScale - timeScale) * 0.1; // Smooth transition value
+
+    // 5. Update Physics Blind Mode (Zero Gravity)
+    if (isBlinded && gameState === 'PLAYING') {
+        let handAreaY = height / 2 + 50; 
+        myHand.forEach(c => {
+            c.updateFloating(handAreaY);
+        });
     }
 }
+
+
+
 function loop() { update(); draw(); requestAnimationFrame(loop); }
 
 function resize() { 
@@ -1436,6 +2287,11 @@ function getCardAt(x, y) {
 }
 
 function onPointerDown(e) {
+      // Logika Restart jika Game Over
+    if (gameState === 'GAMEOVER') {
+        location.reload(); // Reload halaman untuk main ulang
+        return;
+    }
       if (audioCtx.state === 'suspended') audioCtx.resume();
     startBGM(); // Mencoba menyalakan BGM saat interaksi pertama
 
@@ -1477,12 +2333,15 @@ function onPointerDown(e) {
         let c = myHand[idx];
         c.isSelected = true;
         c.isDragging = true;
-        c.isAnimatingPos = false;
-        
+                c.isAnimatingPos = false;
+        c.angle = 0; // Luruskan kartu agar pemain sadar sudah tertangkap
+        c.vx = 0;    // Hentikan momentum
+        c.vy = 0;
         dragOffsetX = x - c.x;
         dragOffsetY = y - c.y;
         
         playSound('deal'); 
+ 
     } else {
         if(selectedIdx !== -1 && myHand[selectedIdx]) {
             myHand[selectedIdx].isSelected = false;
@@ -1503,7 +2362,7 @@ function onPointerMove(e) {
     } else {
         let hovered = false;
         for (let i = myHand.length - 1; i >= 0; i--) {
-            let c = myHand[i];
+             c = myHand[i];
             if (!hovered && x > c.x - cardW/2 && x < c.x + cardW/2 && 
                 y > c.y - cardH/2 && y < c.y + cardH/2) {
                 c.isHovered = true; hovered = true;
@@ -1514,7 +2373,7 @@ function onPointerMove(e) {
 
 function onPointerUp(e) {
     if (dragIdx !== -1) {
-        let c = myHand[dragIdx];
+         c = myHand[dragIdx];
         c.isDragging = false;
         
         let dist = Math.hypot(c.x - width/2, c.y - height/2);
